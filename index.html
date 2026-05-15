@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🎾 테니스 복식 전술판</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: #05111f;
+    font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    height: 100dvh; overflow: hidden;
+    color: #ddf0f8;
+  }
+  #topUI {
+    width: 100%;
+    padding: 6px 10px 4px;
+    flex-shrink: 0;
+  }
+  .header { text-align: center; margin-bottom: 4px; }
+  .sub { font-size: 9px; letter-spacing: 4px; color: #38d9f5; text-transform: uppercase; }
+  h1 { font-size: 15px; font-weight: 900; color: #fff; letter-spacing: 1px; }
+
+  .presets { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin-bottom: 4px; }
+  .preset-btn {
+    padding: 4px 10px; border-radius: 20px; border: none; cursor: pointer;
+    font-size: 11px; font-weight: 700;
+    background: rgba(255,255,255,0.07); color: #7aacbf; transition: all 0.15s;
+  }
+  .preset-btn.active { background: #38d9f5; color: #060e1a; }
+
+  .desc-box {
+    background: rgba(56,217,245,0.07); border: 1px solid rgba(56,217,245,0.14);
+    border-radius: 8px; padding: 3px 12px; margin-bottom: 3px;
+    text-align: center; font-size: 10.5px; color: #7fc8de;
+  }
+  .team-filter {
+    display: flex; gap: 5px; align-items: center; justify-content: center; flex-wrap: wrap;
+  }
+  .team-label { font-size: 10px; color: #4e6880; }
+  .team-btn {
+    padding: 3px 9px; border-radius: 14px; border: 1.5px solid transparent;
+    cursor: pointer; font-size: 10.5px; font-weight: 700;
+    background: rgba(255,255,255,0.05); color: #4e6880; transition: all 0.15s;
+  }
+  .team-btn.all.active  { border-color: #88b8cc; background: rgba(136,184,204,0.13); color: #88b8cc; }
+  .team-btn.mine.active { border-color: #38d9f5; background: rgba(56,217,245,0.13); color: #38d9f5; }
+  .team-btn.opp.active  { border-color: #f87171; background: rgba(248,113,113,0.13); color: #f87171; }
+
+  #courtWrap {
+    flex: 1; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    padding: 4px 8px; min-height: 0;
+  }
+  #court { display: block; touch-action: none; border-radius: 10px; }
+
+  #bottomUI { width: 100%; padding: 4px 8px 6px; flex-shrink: 0; }
+  .legend {
+    display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin-bottom: 4px;
+  }
+  .leg-item {
+    display: flex; align-items: center; gap: 4px;
+    border-radius: 14px; padding: 2px 7px; font-size: 10px; color: #7aaabb;
+  }
+  .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .controls { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+  .ctrl-btn {
+    padding: 5px 10px; border-radius: 18px; border: none; cursor: pointer;
+    font-size: 11px; font-weight: 700;
+    background: rgba(255,255,255,0.07); color: #7aacbf; transition: all 0.15s;
+  }
+  .ctrl-btn.arrow-on { background: #FFD93D; color: #060e1a; }
+  .ctrl-btn.cover-on { background: rgba(56,217,245,0.18); color: #38d9f5; }
+  .ctrl-btn.ball-on  { background: rgba(200,244,0,0.15); color: #b8e800; }
+  .ctrl-btn.angle-on { background: rgba(255,180,0,0.22); color: #ffb800; }
+  .ctrl-btn.del   { color: #f87171; }
+  .ctrl-btn.reset { color: #4ade80; }
+  .guide {
+    margin-top: 3px; font-size: 9.5px; color: #3e5f70;
+    text-align: center; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div id="topUI">
+  <div class="header">
+    <div class="sub">Tennis Doubles</div>
+    <h1>🎾 복식 전술판</h1>
+  </div>
+  <div class="presets">
+    <button class="preset-btn active" data-preset="basic">기본</button>
+    <button class="preset-btn" data-preset="bothUp">양쪽전위</button>
+    <button class="preset-btn" data-preset="bothBack">양쪽후위</button>
+    <button class="preset-btn" data-preset="iForm">I포메이션</button>
+    <button class="preset-btn" data-preset="aus">호주</button>
+  </div>
+  <div class="desc-box" id="descBox">💡 전위/후위 기본 대형</div>
+  <div class="team-filter">
+    <span class="team-label">드래그:</span>
+    <button class="team-btn all active" data-team="all">전체</button>
+    <button class="team-btn mine" data-team="mine">🔵 우리팀</button>
+    <button class="team-btn opp"  data-team="opp">🔴 상대팀</button>
+  </div>
+</div>
+
+<div id="courtWrap">
+  <canvas id="court"></canvas>
+</div>
+
+<div id="bottomUI">
+  <div class="legend" id="legend"></div>
+  <div class="controls">
+    <button class="ctrl-btn" id="btnArrow">➡️ 화살표</button>
+    <button class="ctrl-btn cover-on" id="btnCover">⭕ 커버존</button>
+    <button class="ctrl-btn ball-on"  id="btnBall">🎾 공</button>
+    <button class="ctrl-btn angle-on" id="btnAngle">📐 타구각</button>
+    <button class="ctrl-btn del"   id="btnDel">🗑️ 삭제</button>
+    <button class="ctrl-btn reset" id="btnReset">🔄 초기화</button>
+  </div>
+  <div class="guide" id="guide">
+    선수 탭 → 선택(타구각 표시) &nbsp;·&nbsp; 드래그 → 이동 &nbsp;·&nbsp; 빈 곳 탭 → 선택 해제
+  </div>
+</div>
+
+<script>
+// ── 논리 좌표 ──
+const LW = 520, LH = 820;
+const MARGIN_X = 80, MARGIN_T = 60, MARGIN_B = 60;
+const CL = MARGIN_X, CR = LW - MARGIN_X;
+const CT = MARGIN_T, CB = LH - MARGIN_B;
+const CW = CR - CL, CH = CB - CT;
+const NET_Y  = (CT + CB) / 2;
+const ALLY_W = CW * 0.107;
+const ALLY_L = CL + ALLY_W;
+const ALLY_R = CR - ALLY_W;
+const SVC_GAP = CH * 0.228;
+const SVC_T  = CT + SVC_GAP;
+const SVC_B  = CB - SVC_GAP;
+const CX_L   = (CL + CR) / 2;
+
+const PINFO = {
+  M1: { main:"#38d9f5", dark:"#0ea5c9", shadow:"rgba(56,217,245,0.6)",  label:"우1", team:"mine" },
+  M2: { main:"#4ade80", dark:"#16a34a", shadow:"rgba(74,222,128,0.6)",  label:"우2", team:"mine" },
+  O1: { main:"#f87171", dark:"#dc2626", shadow:"rgba(248,113,113,0.6)", label:"상1", team:"opp"  },
+  O2: { main:"#fb923c", dark:"#ea580c", shadow:"rgba(251,146,60,0.6)",  label:"상2", team:"opp"  },
+};
+const KEYS = ["M1","M2","O1","O2"];
+
+// 선택된 선수
+let selectedKey = null;
+
+function getCoverR(key, pos) {
+  const isMine = key.startsWith("M");
+  return (isMine ? pos.y > NET_Y + 60 : pos.y < NET_Y - 60) ? 90 : 60;
+}
+
+const CZFILL   = { M1:"rgba(56,217,245,0.13)",  M2:"rgba(74,222,128,0.13)",  O1:"rgba(248,113,113,0.13)", O2:"rgba(251,146,60,0.13)" };
+const CZSTROKE = { M1:"rgba(56,217,245,0.5)",   M2:"rgba(74,222,128,0.5)",   O1:"rgba(248,113,113,0.5)",  O2:"rgba(251,146,60,0.5)" };
+
+const PRESETS = {
+  basic:    { desc:"💡 전위/후위 기본 대형",
+    M1:{x:CX_L-50, y:CB-60,    role:"후위"}, M2:{x:CX_L+50, y:SVC_B+30, role:"전위"},
+    O1:{x:CX_L+50, y:CT+60,    role:"후위"}, O2:{x:CX_L-50, y:SVC_T-30, role:"전위"} },
+  bothUp:   { desc:"💡 둘 다 네트 앞으로 올라가기",
+    M1:{x:CX_L-55, y:SVC_B+40, role:"전위"}, M2:{x:CX_L+55, y:SVC_B+40, role:"전위"},
+    O1:{x:CX_L+55, y:SVC_T-40, role:"전위"}, O2:{x:CX_L-55, y:SVC_T-40, role:"전위"} },
+  bothBack: { desc:"💡 둘 다 베이스라인 수비",
+    M1:{x:CX_L-60, y:CB-40,    role:"후위"}, M2:{x:CX_L+60, y:CB-40,    role:"후위"},
+    O1:{x:CX_L+60, y:CT+40,    role:"후위"}, O2:{x:CX_L-60, y:CT+40,    role:"후위"} },
+  iForm:    { desc:"💡 서버+전위 센터에 겹치기",
+    M1:{x:CX_L,    y:CB-50,    role:"서버"}, M2:{x:CX_L,    y:SVC_B+30, role:"전위"},
+    O1:{x:CX_L+60, y:CT+50,    role:"후위"}, O2:{x:CX_L-50, y:SVC_T-30, role:"전위"} },
+  aus:      { desc:"💡 서버+전위 같은 사이드",
+    M1:{x:CX_L-60, y:CB-50,    role:"서버"}, M2:{x:CX_L-60, y:SVC_B+30, role:"전위"},
+    O1:{x:CX_L+60, y:CT+50,    role:"후위"}, O2:{x:CX_L+60, y:SVC_T-30, role:"전위"} },
+};
+
+let players = {}, ball = {x:CX_L, y:NET_Y+60};
+let arrows = [], arrowDraw = null, mousePos = {x:0,y:0};
+let mode = "drag", selTeam = "all";
+let showCover = true, showBall = true, showAngle = true;
+let dragging = null, dragMoved = false;
+let activePreset = "basic";
+
+const canvas = document.getElementById("court");
+const ctx    = canvas.getContext("2d");
+
+// ── 레이아웃 ──
+function layoutCanvas() {
+  const topH    = document.getElementById("topUI").offsetHeight;
+  const bottomH = document.getElementById("bottomUI").offsetHeight;
+  const availH  = window.innerHeight - topH - bottomH - 8;
+  const availW  = window.innerWidth - 12;
+  const ratio   = LW / LH;
+  let cw, ch;
+  if (availW / availH < ratio) { cw = availW; ch = availW / ratio; }
+  else                          { ch = availH; cw = availH * ratio; }
+  cw = Math.floor(cw); ch = Math.floor(ch);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = cw * dpr; canvas.height = ch * dpr;
+  canvas.style.width = cw+"px"; canvas.style.height = ch+"px";
+  draw();
+}
+
+function px(v) { return v * canvas.width  / LW; }
+function py(v) { return v * canvas.height / LH; }
+function line(x1,y1,x2,y2) {
+  ctx.beginPath(); ctx.moveTo(px(x1),py(y1)); ctx.lineTo(px(x2),py(y2)); ctx.stroke();
+}
+
+// ── 사람 아이콘 그리기 ──
+// cx,cy = 발 기준 중심(하단), 색상별로 머리+몸통+팔+다리
+function drawPerson(key, pos) {
+  const c = PINFO[key];
+  const isSelected = (key === selectedKey);
+  const cx = px(pos.x), cy = py(pos.y);
+  const S  = py(20); // 기준 스케일
+
+  ctx.save();
+
+  // 선택 시 빛나는 링
+  if (isSelected) {
+    ctx.shadowBlur = 24;
+    ctx.shadowColor = c.shadow;
+    ctx.strokeStyle = c.main;
+    ctx.lineWidth = px(3.5);
+    ctx.beginPath();
+    // 몸 전체를 감싸는 타원형 링
+    ctx.ellipse(cx, cy - S*0.55, S*0.7, S*1.1, 0, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // 그림자
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.beginPath();
+  ctx.ellipse(cx+px(2), cy+py(2)-S*0.05, S*0.45, S*0.18, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // ── 다리 ──
+  ctx.strokeStyle = c.dark;
+  ctx.lineWidth = px(5.5);
+  ctx.lineCap = "round";
+  ctx.shadowBlur = 6; ctx.shadowColor = c.shadow;
+  // 왼쪽 다리
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - S*0.22);
+  ctx.lineTo(cx - S*0.22, cy + S*0.08);
+  ctx.stroke();
+  // 오른쪽 다리
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - S*0.22);
+  ctx.lineTo(cx + S*0.22, cy + S*0.08);
+  ctx.stroke();
+
+  // ── 몸통 ──
+  ctx.fillStyle = c.main;
+  ctx.strokeStyle = c.dark;
+  ctx.lineWidth = px(1.5);
+  ctx.shadowBlur = 10; ctx.shadowColor = c.shadow;
+  ctx.beginPath();
+  // 어깨 → 허리 사다리꼴
+  ctx.moveTo(cx - S*0.36, cy - S*0.65); // 왼어깨
+  ctx.lineTo(cx + S*0.36, cy - S*0.65); // 오른어깨
+  ctx.lineTo(cx + S*0.22, cy - S*0.22); // 오른허리
+  ctx.lineTo(cx - S*0.22, cy - S*0.22); // 왼허리
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // 몸통 하이라이트
+  ctx.fillStyle = "rgba(255,255,255,0.18)";
+  ctx.beginPath();
+  ctx.moveTo(cx - S*0.28, cy - S*0.62);
+  ctx.lineTo(cx + S*0.10, cy - S*0.62);
+  ctx.lineTo(cx + S*0.08, cy - S*0.38);
+  ctx.lineTo(cx - S*0.20, cy - S*0.38);
+  ctx.closePath(); ctx.fill();
+
+  // ── 팔 ──
+  ctx.strokeStyle = c.dark;
+  ctx.lineWidth = px(4.5);
+  ctx.lineCap = "round";
+  // 왼팔 (라켓 쪽 - 뻗음)
+  ctx.beginPath();
+  ctx.moveTo(cx - S*0.36, cy - S*0.65);
+  ctx.lineTo(cx - S*0.55, cy - S*0.38);
+  ctx.stroke();
+  // 오른팔
+  ctx.beginPath();
+  ctx.moveTo(cx + S*0.36, cy - S*0.65);
+  ctx.lineTo(cx + S*0.48, cy - S*0.40);
+  ctx.stroke();
+
+  // 라켓 (오른팔 끝에 작은 타원)
+  ctx.save();
+  ctx.translate(cx + S*0.56, cy - S*0.34);
+  ctx.rotate(-0.5);
+  ctx.strokeStyle = c.main;
+  ctx.lineWidth = px(2);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, S*0.14, S*0.09, 0, 0, Math.PI*2);
+  ctx.stroke();
+  // 라켓 손잡이
+  ctx.beginPath();
+  ctx.moveTo(0, S*0.09);
+  ctx.lineTo(0, S*0.22);
+  ctx.strokeStyle = c.dark;
+  ctx.lineWidth = px(3);
+  ctx.stroke();
+  ctx.restore();
+
+  // ── 머리 ──
+  ctx.shadowBlur = 8; ctx.shadowColor = c.shadow;
+  ctx.fillStyle = c.main;
+  ctx.strokeStyle = c.dark;
+  ctx.lineWidth = px(2);
+  ctx.beginPath();
+  ctx.arc(cx, cy - S*0.88, S*0.26, 0, Math.PI*2);
+  ctx.fill(); ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // 머리 하이라이트
+  ctx.fillStyle = "rgba(255,255,255,0.3)";
+  ctx.beginPath();
+  ctx.arc(cx - S*0.08, cy - S*0.97, S*0.1, 0, Math.PI*2);
+  ctx.fill();
+
+  // ── 이름 라벨 ──
+  ctx.fillStyle = "#fff";
+  ctx.font = `900 ${py(10)}px 'Apple SD Gothic Neo',sans-serif`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  // 라벨 배경
+  ctx.fillStyle = "rgba(0,0,0,0.45)";
+  const lw = py(18), lh = py(11);
+  ctx.beginPath();
+  ctx.roundRect(cx - lw/2, cy - S*0.88 - lh/2, lw, lh, 3);
+  ctx.fill();
+  ctx.fillStyle = c.main;
+  ctx.fillText(c.label, cx, cy - S*0.88);
+
+  ctx.restore();
+}
+
+// ── 커버존 ──
+function drawCoverZone(key, pos) {
+  const r = getCoverR(key, pos);
+  ctx.save();
+  ctx.fillStyle = CZFILL[key];
+  ctx.beginPath(); ctx.arc(px(pos.x), py(pos.y), px(r), 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = CZSTROKE[key]; ctx.lineWidth = 1.5;
+  ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.arc(px(pos.x), py(pos.y), px(r), 0, Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+// ── 선수 위치에서 타구 가능 각도 부채꼴 ──
+function drawShotAngles(key, pos) {
+  const c = PINFO[key];
+  const bx = pos.x, by = pos.y;
+  const isMySide = key.startsWith("M"); // 우리팀=하단, 상대팀=상단
+
+  // 타구 목표: 상대 코트 전체
+  const tY_far  = isMySide ? CT       : CB;       // 상대 베이스라인
+  const tY_near = isMySide ? NET_Y+8  : NET_Y-8;  // 네트 바로 너머
+  const tLeft   = CL;   // 알리까지 포함 (더블)
+  const tRight  = CR;
+
+  const corners = [
+    {x: tLeft,  y: tY_far },
+    {x: tRight, y: tY_far },
+    {x: tLeft,  y: tY_near},
+    {x: tRight, y: tY_near},
+  ];
+
+  const angles = corners.map(c => Math.atan2(c.y - by, c.x - bx));
+  let minAng = Math.min(...angles);
+  let maxAng = Math.max(...angles);
+
+  // 각도 차이가 π 이상이면 반대 방향 → 반전
+  if (maxAng - minAng > Math.PI) {
+    [minAng, maxAng] = [maxAng, minAng + Math.PI*2];
+  }
+
+  const fanR = LH * 0.52;
+  ctx.save();
+
+  // 부채꼴 채우기
+  ctx.globalAlpha = 0.13;
+  ctx.fillStyle = c.main;
+  ctx.beginPath();
+  ctx.moveTo(px(bx), py(by));
+  ctx.arc(px(bx), py(by), px(fanR), minAng, maxAng, false);
+  ctx.closePath();
+  ctx.fill();
+
+  // 경계선 2개
+  ctx.globalAlpha = 0.7;
+  ctx.strokeStyle = c.main;
+  ctx.lineWidth = 1.8;
+  ctx.setLineDash([7, 4]);
+  ctx.beginPath();
+  ctx.moveTo(px(bx), py(by));
+  ctx.lineTo(px(bx + fanR*Math.cos(minAng)), py(by + fanR*Math.sin(minAng)));
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(px(bx), py(by));
+  ctx.lineTo(px(bx + fanR*Math.cos(maxAng)), py(by + fanR*Math.sin(maxAng)));
+  ctx.stroke();
+
+  // 호 (가까운 호)
+  ctx.globalAlpha = 0.45;
+  ctx.beginPath();
+  ctx.arc(px(bx), py(by), px(fanR * 0.32), minAng, maxAng, false);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 각도 숫자
+  const angleDeg = Math.round(Math.abs(maxAng - minAng) * 180 / Math.PI);
+  const midAng   = (minAng + maxAng) / 2;
+  const labelR   = fanR * 0.38;
+  const lx = bx + labelR * Math.cos(midAng);
+  const ly = by + labelR * Math.sin(midAng);
+
+  ctx.globalAlpha = 1;
+  // 라벨 배경
+  const txtW = py(32), txtH = py(18);
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.beginPath();
+  ctx.roundRect(px(lx)-txtW/2, py(ly)-txtH/2, txtW, txtH, 4);
+  ctx.fill();
+  ctx.fillStyle = c.main;
+  ctx.font = `bold ${py(12)}px 'Apple SD Gothic Neo',sans-serif`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(angleDeg + "°", px(lx), py(ly));
+
+  // 타깃 코너 점
+  corners.forEach(corner => {
+    ctx.globalAlpha = 0.75;
+    ctx.fillStyle = c.main;
+    ctx.beginPath();
+    ctx.arc(px(corner.x), py(corner.y), px(5.5), 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.6)";
+    ctx.lineWidth = 1.2;
+    ctx.globalAlpha = 0.9;
+    ctx.stroke();
+  });
+
+  ctx.restore();
+}
+
+// ── 화살표 ──
+function drawArrow(x1,y1,x2,y2,color,dashed) {
+  const dx=x2-x1, dy=y2-y1, len=Math.sqrt(dx*dx+dy*dy);
+  if (len<12) return;
+  const ang=Math.atan2(dy,dx);
+  const ex=x2-13*Math.cos(ang), ey=y2-13*Math.sin(ang);
+  ctx.save();
+  ctx.strokeStyle=color; ctx.fillStyle=color;
+  ctx.lineWidth=2.5; ctx.globalAlpha=0.9; ctx.lineCap="round";
+  if(dashed) ctx.setLineDash([7,4]);
+  ctx.beginPath(); ctx.moveTo(px(x1),py(y1)); ctx.lineTo(px(ex),py(ey)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(px(x2),py(y2));
+  ctx.lineTo(px(ex-7*Math.sin(ang)),py(ey+7*Math.cos(ang)));
+  ctx.lineTo(px(ex+7*Math.sin(ang)),py(ey-7*Math.cos(ang)));
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+// ── 공 ──
+function drawBall(x,y) {
+  ctx.save();
+  ctx.fillStyle="rgba(0,0,0,0.28)";
+  ctx.beginPath(); ctx.arc(px(x+2),py(y+3),px(11),0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#c8f400";
+  ctx.beginPath(); ctx.arc(px(x),py(y),px(11),0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle="#8faa00"; ctx.lineWidth=1.8;
+  ctx.beginPath(); ctx.arc(px(x),py(y),px(11),0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle="rgba(255,255,255,0.5)"; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(px(x-6),py(y)); ctx.quadraticCurveTo(px(x),py(y-5),px(x+6),py(y)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px(x-6),py(y)); ctx.quadraticCurveTo(px(x),py(y+5),px(x+6),py(y)); ctx.stroke();
+  ctx.restore();
+}
+
+// ── 메인 드로우 ──
+function draw() {
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // 바깥 서페이스
+  ctx.fillStyle = "#1a3d25";
+  ctx.beginPath(); ctx.roundRect(0,0,W,H,12); ctx.fill();
+
+  // 코트 내부
+  const cg = ctx.createLinearGradient(0,0,0,H);
+  cg.addColorStop(0,   "#1c7840");
+  cg.addColorStop(0.49,"#186535");
+  cg.addColorStop(0.51,"#155d2e");
+  cg.addColorStop(1,   "#125228");
+  ctx.fillStyle = cg;
+  ctx.fillRect(px(CL), py(CT), px(CR-CL), py(CB-CT));
+
+  // 알리 음영
+  ctx.fillStyle = "rgba(0,0,0,0.07)";
+  ctx.fillRect(px(CL), py(CT), px(ALLY_W), py(CB-CT));
+  ctx.fillRect(px(ALLY_R), py(CT), px(ALLY_W), py(CB-CT));
+
+  // 커버존
+  if (showCover) KEYS.forEach(k => drawCoverZone(k, players[k]));
+
+  // 타구각 (선택된 선수에만)
+  if (showAngle && selectedKey) {
+    drawShotAngles(selectedKey, players[selectedKey]);
+  }
+
+  // 코트 라인
+  ctx.strokeStyle = "rgba(255,255,255,0.85)"; ctx.lineWidth = 2.5;
+  ctx.strokeRect(px(CL), py(CT), px(CR-CL), py(CB-CT));
+  ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineWidth = 1.8;
+  line(ALLY_L,CT,ALLY_L,CB); line(ALLY_R,CT,ALLY_R,CB);
+  ctx.strokeStyle = "rgba(255,255,255,0.65)";
+  line(ALLY_L,SVC_T,ALLY_R,SVC_T); line(ALLY_L,SVC_B,ALLY_R,SVC_B);
+  ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 1.5;
+  line(CX_L,SVC_T,CX_L,SVC_B);
+  line(CX_L,CT,CX_L,CT+14); line(CX_L,CB-14,CX_L,CB);
+
+  // 네트
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.fillRect(0, py(NET_Y-5), W, py(10));
+  ctx.shadowBlur=10; ctx.shadowColor="rgba(255,255,255,0.7)";
+  ctx.strokeStyle="white"; ctx.lineWidth=3;
+  line(0,NET_Y,LW,NET_Y);
+  ctx.shadowBlur=0;
+  ctx.fillStyle="#c8a05a";
+  ctx.fillRect(px(CL-8),py(NET_Y-14),px(10),py(28));
+  ctx.fillRect(px(CR-2),py(NET_Y-14),px(10),py(28));
+  ctx.fillStyle="rgba(255,255,255,0.3)";
+  ctx.font=`${py(8)}px sans-serif`;
+  ctx.textAlign="center"; ctx.textBaseline="alphabetic";
+  ctx.fillText("NET",px(CX_L),py(NET_Y-8));
+
+  // 팀 코트명
+  ctx.font=`bold ${py(9)}px 'Apple SD Gothic Neo',sans-serif`;
+  ctx.fillStyle="rgba(56,217,245,0.3)"; ctx.textBaseline="alphabetic";
+  ctx.fillText("우리팀 코트",px(CX_L),py(CB-10));
+  ctx.fillStyle="rgba(248,113,113,0.3)";
+  ctx.fillText("상대팀 코트",px(CX_L),py(CT+20));
+
+  // 화살표
+  arrows.forEach(a => drawArrow(a.x1,a.y1,a.x2,a.y2,a.color,!a.fromKey));
+  if (arrowDraw) drawArrow(arrowDraw.x1,arrowDraw.y1,mousePos.x,mousePos.y,arrowDraw.color,!arrowDraw.fromKey);
+
+  // 공
+  if (showBall) drawBall(ball.x, ball.y);
+
+  // 선수 (사람 아이콘)
+  KEYS.forEach(k => drawPerson(k, players[k]));
+}
+
+// ── 좌표 변환 ──
+function getLogicalPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return {
+    x: Math.max(0, Math.min(LW, (t.clientX-rect.left)/rect.width  * LW)),
+    y: Math.max(0, Math.min(LH, (t.clientY-rect.top) /rect.height * LH)),
+  };
+}
+
+// 선수 히트 (사람 모양 기준: 머리~발 범위)
+function hitPlayer(pos) {
+  for (let i=KEYS.length-1; i>=0; i--) {
+    const k=KEYS[i], p=players[k];
+    const dx=pos.x-p.x, dy=pos.y-p.y;
+    // 세로로 좀 더 넓게 (머리 위~발 아래)
+    if (Math.abs(dx) < 24 && dy > -50 && dy < 14) return k;
+  }
+  return null;
+}
+function hitBall(pos) {
+  const dx=pos.x-ball.x, dy=pos.y-ball.y;
+  return Math.sqrt(dx*dx+dy*dy) < 18;
+}
+
+// ── 이벤트 ──
+canvas.addEventListener("mousedown",  onDown);
+canvas.addEventListener("touchstart", onDown, {passive:false});
+canvas.addEventListener("mousemove",  onMove);
+canvas.addEventListener("touchmove",  onMove, {passive:false});
+canvas.addEventListener("mouseup",    onUp);
+canvas.addEventListener("touchend",   onUp);
+
+function onDown(e) {
+  e.preventDefault();
+  const pos = getLogicalPos(e);
+  const pk  = hitPlayer(pos);
+  dragMoved = false;
+
+  if (mode === "arrow") {
+    if (pk) arrowDraw = { x1:players[pk].x, y1:players[pk].y, color:PINFO[pk].main, fromKey:pk };
+    else    arrowDraw = { x1:pos.x, y1:pos.y, color:"rgba(255,255,255,0.75)", fromKey:null };
+    mousePos = pos; return;
+  }
+  if (pk) {
+    if (selTeam === "all" || PINFO[pk].team === selTeam) dragging = pk;
+  } else if (showBall && hitBall(pos)) {
+    dragging = "ball";
+  }
+}
+function onMove(e) {
+  e.preventDefault();
+  const pos = getLogicalPos(e);
+  mousePos = pos;
+  if (dragging) {
+    const dx = pos.x - (dragging==="ball" ? ball.x : players[dragging].x);
+    const dy = pos.y - (dragging==="ball" ? ball.y : players[dragging].y);
+    if (Math.sqrt(dx*dx+dy*dy) > 4) dragMoved = true;
+  }
+  if (dragging==="ball")  { ball.x=pos.x; ball.y=pos.y; }
+  else if (dragging)      { players[dragging].x=pos.x; players[dragging].y=pos.y; }
+  draw();
+}
+function onUp(e) {
+  if (mode==="arrow" && arrowDraw) {
+    const pos = getLogicalPos(e);
+    const dx=pos.x-arrowDraw.x1, dy=pos.y-arrowDraw.y1;
+    if (Math.sqrt(dx*dx+dy*dy)>20) arrows.push({...arrowDraw,x2:pos.x,y2:pos.y});
+    arrowDraw=null;
+  } else if (!dragMoved && dragging && dragging !== "ball") {
+    // 드래그 없이 탭만 → 선택 토글
+    selectedKey = (selectedKey === dragging) ? null : dragging;
+    buildLegend();
+  } else if (!dragMoved && !dragging) {
+    // 빈 곳 탭 → 선택 해제
+    const pos = getLogicalPos(e);
+    if (!hitPlayer(pos) && !(showBall && hitBall(pos))) {
+      selectedKey = null;
+      buildLegend();
+    }
+  }
+  dragging=null; dragMoved=false; draw();
+}
+
+// ── 프리셋 ──
+function applyPreset(key) {
+  activePreset = key;
+  selectedKey = null;
+  const p = PRESETS[key];
+  KEYS.forEach(k => { players[k] = {...p[k]}; });
+  arrows=[]; arrowDraw=null;
+  document.getElementById("descBox").textContent = p.desc;
+  document.querySelectorAll(".preset-btn").forEach(b => b.classList.toggle("active", b.dataset.preset===key));
+  buildLegend(); draw();
+}
+
+// ── 버튼 이벤트 ──
+document.querySelectorAll(".preset-btn").forEach(b =>
+  b.addEventListener("click", () => applyPreset(b.dataset.preset))
+);
+document.querySelectorAll(".team-btn").forEach(b =>
+  b.addEventListener("click", () => {
+    selTeam = b.dataset.team;
+    document.querySelectorAll(".team-btn").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+  })
+);
+
+const btnArrow = document.getElementById("btnArrow");
+btnArrow.addEventListener("click", () => {
+  mode = mode==="drag" ? "arrow" : "drag";
+  arrowDraw = null;
+  btnArrow.textContent = mode==="arrow" ? "✏️ 화살표 ON" : "➡️ 화살표";
+  btnArrow.classList.toggle("arrow-on", mode==="arrow");
+  document.getElementById("guide").innerHTML = mode==="arrow"
+    ? "선수 클릭→드래그: 이동 화살표 &nbsp;·&nbsp; 빈 곳 클릭→드래그: 자유 화살표"
+    : "선수 탭 → 선택(타구각 표시) &nbsp;·&nbsp; 드래그 → 이동 &nbsp;·&nbsp; 빈 곳 탭 → 선택 해제";
+});
+
+const btnCover = document.getElementById("btnCover");
+btnCover.addEventListener("click", () => {
+  showCover = !showCover;
+  btnCover.textContent = showCover ? "⭕ 커버존 ON" : "⭕ 커버존 OFF";
+  btnCover.classList.toggle("cover-on", showCover);
+  draw();
+});
+
+const btnBall = document.getElementById("btnBall");
+btnBall.addEventListener("click", () => {
+  showBall = !showBall;
+  btnBall.textContent = showBall ? "🎾 공 ON" : "🎾 공 OFF";
+  btnBall.classList.toggle("ball-on", showBall);
+  draw();
+});
+
+const btnAngle = document.getElementById("btnAngle");
+btnAngle.addEventListener("click", () => {
+  showAngle = !showAngle;
+  btnAngle.textContent = showAngle ? "📐 타구각 ON" : "📐 타구각 OFF";
+  btnAngle.classList.toggle("angle-on", showAngle);
+  draw();
+});
+
+document.getElementById("btnDel").addEventListener("click",   () => { arrows=[]; arrowDraw=null; draw(); });
+document.getElementById("btnReset").addEventListener("click", () => {
+  selectedKey = null; applyPreset(activePreset); ball={x:CX_L,y:NET_Y+60}; draw();
+});
+
+// ── 범례 ──
+function buildLegend() {
+  const el = document.getElementById("legend");
+  el.innerHTML = "";
+  KEYS.forEach(k => {
+    const isMine = k.startsWith("M");
+    const isSel  = k === selectedKey;
+    const d = document.createElement("div");
+    d.className = "leg-item";
+    d.style.cssText = `background:${isSel?"rgba(255,180,0,0.13)":isMine?"rgba(56,217,245,0.07)":"rgba(248,113,113,0.07)"};border:1.5px solid ${isSel?PINFO[k].main:isMine?"rgba(56,217,245,0.18)":"rgba(248,113,113,0.18)"}`;
+    d.innerHTML = `<div class="leg-dot" style="background:${PINFO[k].main}"></div><span><b style="color:${PINFO[k].main}">${PINFO[k].label}</b> ${players[k].role}${isSel?" 📐":"" }</span>`;
+    el.appendChild(d);
+  });
+  const bd = document.createElement("div");
+  bd.className = "leg-item";
+  bd.style.cssText = "background:rgba(200,244,0,0.07);border:1px solid rgba(200,244,0,0.18)";
+  bd.innerHTML = `<div class="leg-dot" style="background:#c8f400"></div><span>공</span>`;
+  el.appendChild(bd);
+}
+
+// ── 초기 실행 ──
+applyPreset("basic");
+buildLegend();
+window.addEventListener("resize", layoutCanvas);
+layoutCanvas();
+</script>
+</body>
+</html>
