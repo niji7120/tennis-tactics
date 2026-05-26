@@ -4,978 +4,689 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>🎾 테니스 복식 전술판</title>
+<title>테니스 스코어보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body {
-    background: #05111f;
-    font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-    display: flex; flex-direction: column; align-items: center;
-    height: 100dvh; overflow: hidden;
-    color: #ddf0f8;
-  }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-  #topUI {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    padding: 8px 10px 8px;
-    background: linear-gradient(to bottom, rgba(5,17,31,0.97) 70%, transparent);
-    transform: translateY(0); transition: transform 0.3s ease;
-  }
-  #topUI.hidden { transform: translateY(-110%); }
+:root {
+  --bg: #050810;
+  --gold: #ffd84d;
+  --blue: #1a6bff;
+  --red: #ff4f4f;
+  --green: #00a651;
+  --dim: #7a7aaa;
+  --white: #ffffff;
+  --panel-bg: rgba(5,8,20,0.99);
+}
 
-  .header { text-align: center; margin-bottom: 5px; }
-  .sub { font-size: 9px; letter-spacing: 4px; color: #38d9f5; text-transform: uppercase; }
-  h1 { font-size: 15px; font-weight: 900; color: #fff; letter-spacing: 1px; }
+/* 세로 모드 안내 */
+@media (orientation: portrait) {
+  #rotate-msg { display:flex !important; }
+  #main, #ctrl-panel, #winner-screen { display:none !important; }
+}
 
-  .presets { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin-bottom: 4px; }
-  .preset-btn {
-    padding: 5px 12px; border-radius: 20px; border: none; cursor: pointer;
-    font-size: 12px; font-weight: 700;
-    background: rgba(255,255,255,0.07); color: #7aacbf; transition: all 0.15s;
-  }
-  .preset-btn.active { background: #38d9f5; color: #060e1a; }
+html, body {
+  width:100%; height:100%;
+  background:var(--bg);
+  color:var(--white);
+  font-family:'Bebas Neue', sans-serif;
+  overflow:hidden;
+}
 
-  .desc-box {
-    background: rgba(56,217,245,0.07); border: 1px solid rgba(56,217,245,0.14);
-    border-radius: 8px; padding: 4px 12px;
-    text-align: center; font-size: 11px; color: #7fc8de;
-  }
+/* ─── 메인 화면 ─── */
+#main {
+  width:100vw; height:100vh;
+  display:flex; flex-direction:column;
+  position:relative; cursor:pointer; user-select:none;
+}
+#main::before {
+  content:''; position:absolute; inset:0;
+  background-image:
+    linear-gradient(rgba(0,82,204,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,82,204,0.04) 1px, transparent 1px);
+  background-size:60px 60px; pointer-events:none;
+}
 
-  #bottomUI {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-    padding: 8px 8px 12px;
-    background: linear-gradient(to top, rgba(5,17,31,0.97) 70%, transparent);
-    transform: translateY(0); transition: transform 0.3s ease;
-  }
-  #bottomUI.hidden { transform: translateY(110%); }
+/* 상단 바 */
+#top-bar {
+  display:flex; align-items:center; justify-content:center;
+  height:8vh; border-bottom:1px solid #0d1020;
+  flex-shrink:0; z-index:1; position:relative;
+}
+#match-title {
+  font-family:'Oswald',sans-serif; font-size:clamp(13px,2.2vh,20px);
+  color:var(--gold); letter-spacing:4px; font-weight:600;
+}
+/* 현재 세트 게임 스코어 — 상단 우측 */
+#set-display {
+  position:absolute; right:3vw; top:50%; transform:translateY(-50%);
+  font-family:'Oswald',sans-serif; font-size:clamp(11px,1.8vh,16px);
+  color:var(--dim); letter-spacing:2px;
+}
+#set-display span { color:var(--white); font-weight:700; }
 
-  .controls { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-bottom: 4px; }
-  .ctrl-btn {
-    padding: 7px 13px; border-radius: 18px; border: none; cursor: pointer;
-    font-size: 12px; font-weight: 700;
-    background: rgba(255,255,255,0.09); color: #7aacbf; transition: all 0.15s;
-  }
-  .ctrl-btn.arrow-on  { background: #FFD93D; color: #060e1a; }
-  .ctrl-btn.draw-on   { background: #ff6bcb; color: #fff; }
-  .ctrl-btn.cover-on  { background: rgba(56,217,245,0.18); color: #38d9f5; }
-  .ctrl-btn.ball-on   { background: rgba(200,244,0,0.15); color: #b8e800; }
-  .ctrl-btn.angle-on  { background: rgba(255,180,0,0.22); color: #ffb800; }
-  .ctrl-btn.del    { color: #f87171; }
-  .ctrl-btn.reset  { color: #4ade80; }
-  .guide { font-size: 10px; color: #3e5f70; text-align: center; line-height: 1.5; }
+/* ─── 메인 점수 영역 ─── */
+#score-area {
+  flex:1; display:flex; align-items:center; justify-content:center;
+  gap:0; z-index:1; position:relative;
+}
 
-  #toggleHint {
-    position: fixed; top: 50%; right: 6px; transform: translateY(-50%);
-    z-index: 200; width: 28px; height: 28px; border-radius: 50%; border: none;
-    background: rgba(56,217,245,0.18); color: #38d9f5; font-size: 14px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
-  }
+.player-block {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  height:100%; position:relative; transition:background 0.3s;
+}
+.player-block.serving { background:rgba(173,255,47,0.03); }
 
-  #courtWrap {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    display: flex; align-items: center; justify-content: center;
-  }
-  #court { display: block; touch-action: none; }
-  #court.draw-cursor { cursor: crosshair; }
+/* 서브 표시 */
+.serve-dot {
+  width:clamp(10px,1.5vh,16px); height:clamp(10px,1.5vh,16px);
+  border-radius:50%; background:transparent; border:2px solid var(--dim);
+  position:absolute; top:14%; transition:all 0.3s;
+}
+.serve-dot.on {
+  background:radial-gradient(circle at 35% 35%, #ccff00, #88cc00);
+  border-color:transparent; box-shadow:0 0 12px rgba(180,255,0,0.7);
+  animation:servePulse 1.4s ease-in-out infinite;
+}
+@keyframes servePulse {
+  0%,100% { box-shadow:0 0 8px rgba(180,255,0,0.5); }
+  50%      { box-shadow:0 0 20px rgba(180,255,0,0.9); }
+}
 
-  /* 모달 */
-  .modal-overlay {
-    position: fixed; inset: 0; z-index: 500;
-    background: rgba(0,0,0,0.75);
-    display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(4px);
-  }
-  .modal-overlay.hidden { display: none; }
-  .modal-box {
-    background: #0d2035; border: 1px solid rgba(56,217,245,0.25);
-    border-radius: 16px; padding: 20px; min-width: 300px; max-width: 92vw;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-  }
-  .modal-title { font-size: 15px; font-weight: 900; color: #38d9f5; margin-bottom: 14px; text-align: center; }
-  .modal-row { margin-bottom: 12px; }
-  .modal-label { font-size: 11px; color: #7aacbf; margin-bottom: 4px; }
-  .modal-input {
-    width: 100%; padding: 8px 10px;
-    background: rgba(255,255,255,0.07); border: 1px solid rgba(56,217,245,0.2);
-    border-radius: 8px; color: #fff; font-size: 13px; outline: none;
-  }
-  .modal-input:focus { border-color: #38d9f5; }
-  .modal-btns { display: flex; gap: 8px; margin-top: 14px; }
-  .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; }
-  .modal-btn.ok     { background: #38d9f5; color: #060e1a; }
-  .modal-btn.cancel { background: rgba(255,255,255,0.1); color: #7aacbf; }
+/* 선수 이름 */
+.p-name {
+  font-size:clamp(18px,4.5vh,50px); letter-spacing:3px;
+  color:#fff; text-align:center; margin-bottom:0.5vh;
+  font-family:'Oswald',sans-serif; font-weight:700;
+  text-shadow:0 2px 12px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.2);
+}
 
-  .color-swatches { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-  .color-swatch {
-    width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
-    border: 2px solid transparent; transition: all 0.15s;
-  }
-  .color-swatch.selected { border-color: #fff; transform: scale(1.2); }
+/* 포인트 숫자 — 크고 굵게 */
+.p-pts {
+  font-size:clamp(90px,22vw,280px); line-height:0.85;
+  color:#fff; font-weight:900;
+  -webkit-text-stroke:3px #ffd84d;
+  text-shadow:0 0 30px rgba(255,255,255,0.9), 0 0 60px rgba(255,216,77,0.5), 0 4px 0 rgba(0,0,0,0.9);
+  transition:color 0.15s; letter-spacing:-2px;
+}
+.p-pts.deuce-ad {
+  color:#ccff00; -webkit-text-stroke:3px rgba(180,255,0,0.5);
+  text-shadow:0 0 30px rgba(180,255,0,0.9), 0 0 80px rgba(180,255,0,0.5), 0 4px 0 rgba(0,0,0,0.9);
+}
 
-  .theme-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-  .theme-chip {
-    padding: 6px 12px; border-radius: 20px; border: none; cursor: pointer;
-    font-size: 12px; font-weight: 700;
-    background: rgba(255,255,255,0.07); color: #7aacbf; transition: all 0.15s;
-  }
-  .theme-chip.selected { background: #38d9f5; color: #060e1a; }
+/* 가운데 구분선 */
+#divider {
+  width:3px; height:60vh;
+  background:linear-gradient(to bottom, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+  opacity:0.5; flex-shrink:0;
+}
 
-  .share-link-box {
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(56,217,245,0.2);
-    border-radius: 8px; padding: 8px 10px; font-size: 11px; color: #7aacbf;
-    word-break: break-all; margin-bottom: 8px; max-height: 80px; overflow-y: auto;
-  }
+/* 게임 스코어 (하단) */
+#game-row {
+  display:flex; align-items:center; justify-content:center;
+  height:7vh; gap:6vw; flex-shrink:0; z-index:1;
+}
+.g-score {
+  font-size:clamp(28px,5.5vh,56px); color:#fff; letter-spacing:2px;
+  font-weight:900; text-shadow:0 0 15px rgba(255,255,255,0.5);
+}
+.g-label {
+  font-size:clamp(8px,1.2vh,12px); color:#aaaacc; letter-spacing:3px;
+  font-family:'Oswald',sans-serif; font-weight:400; text-align:center;
+}
 
-  #toast {
-    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-    background: rgba(56,217,245,0.92); color: #060e1a;
-    padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 700;
-    opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 999;
-  }
-  #toast.show { opacity: 1; }
+/* 탭 힌트 */
+#tap-hint {
+  position:absolute; bottom:2vh; left:50%; transform:translateX(-50%);
+  font-family:'Oswald',sans-serif; font-size:clamp(9px,1.3vh,13px);
+  color:var(--dim); letter-spacing:3px;
+  animation:blink 2.5s ease-in-out infinite;
+}
+@keyframes blink { 0%,100% { opacity:0.4; } 50% { opacity:0.9; } }
 
-  .save-slot {
-    display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px;
-    background: rgba(255,255,255,0.05); margin-bottom: 6px; cursor: pointer; transition: background 0.15s;
-  }
-  .save-slot:hover { background: rgba(56,217,245,0.1); }
-  .save-slot-info { flex: 1; }
-  .save-slot-name { font-size: 13px; color: #ddf0f8; }
-  .save-slot-date { font-size: 10px; color: #4e7a8a; }
-  .save-slot-del {
-    padding: 2px 8px; border-radius: 8px; border: none;
-    background: rgba(248,113,113,0.15); color: #f87171; font-size: 11px; cursor: pointer;
-  }
-  .save-empty { text-align: center; color: #3e5f70; font-size: 12px; padding: 20px; }
+/* 상태 메시지 */
+#status-msg {
+  position:absolute; top:10%; left:50%; transform:translateX(-50%);
+  font-size:clamp(11px,1.8vh,18px); color:var(--gold); letter-spacing:4px;
+  font-family:'Oswald',sans-serif; font-weight:300; white-space:nowrap;
+  opacity:0; transition:opacity 0.3s; pointer-events:none; z-index:5;
+}
+#status-msg.show { opacity:1; }
+
+/* ─── 컨트롤 패널 ─── */
+#ctrl-panel {
+  position:fixed; inset:0; z-index:50;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+  pointer-events:none;
+}
+#ctrl-backdrop {
+  position:absolute; inset:0; background:rgba(0,0,0,0.65);
+  backdrop-filter:blur(4px); opacity:0; transition:opacity 0.35s; pointer-events:none;
+}
+#ctrl-box {
+  position:relative; width:100%; max-width:900px;
+  background:var(--panel-bg); border-top:2px solid var(--blue);
+  border-radius:16px 16px 0 0; padding:16px 20px 24px;
+  transform:translateY(100%); transition:transform 0.4s cubic-bezier(0.32,0.72,0,1);
+  pointer-events:none; display:flex; flex-direction:column; gap:14px;
+}
+#ctrl-panel.open #ctrl-backdrop { opacity:1; pointer-events:all; }
+#ctrl-panel.open #ctrl-box { transform:translateY(0); pointer-events:all; }
+
+#close-handle {
+  width:40px; height:4px; background:var(--dim);
+  border-radius:2px; margin:0 auto 4px; cursor:pointer;
+}
+
+/* 탭 */
+.tab-row {
+  display:flex; gap:6px; border-bottom:1px solid #1a1a2e; padding-bottom:10px;
+}
+.tab-btn {
+  flex:1; font-family:'Oswald',sans-serif; font-size:clamp(11px,1.7vh,15px);
+  letter-spacing:1.5px; padding:8px 4px;
+  background:#0d0f1e; border:1px solid #1a1a2e; color:var(--dim);
+  border-radius:4px; cursor:pointer; transition:all 0.2s;
+}
+.tab-btn.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+
+.tab-content { display:none; }
+.tab-content.active { display:flex; flex-direction:column; gap:10px; }
+
+/* 점수 탭 — 좌우 */
+.score-tab-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.p-ctrl {
+  background:#0d0f1e; border:1px solid #1a1a2e; border-radius:6px;
+  padding:12px; display:flex; flex-direction:column; gap:8px;
+}
+.p-ctrl-name {
+  font-family:'Oswald',sans-serif; font-size:clamp(11px,1.6vh,15px);
+  letter-spacing:2px; color:var(--gold);
+}
+.p-ctrl-name.b { color:#5599ff; }
+.btn-group { display:flex; gap:6px; }
+
+button {
+  font-family:'Oswald',sans-serif; letter-spacing:1px;
+  border:none; border-radius:4px; cursor:pointer;
+  transition:all 0.15s; font-weight:500;
+}
+button:active { transform:scale(0.94); }
+
+.btn-pt {
+  flex:1; padding:clamp(9px,1.5vh,15px) 8px;
+  font-size:clamp(12px,1.7vh,16px);
+  background:var(--blue); color:#fff;
+}
+.btn-pt:hover { background:#0066ff; }
+
+.btn-sm {
+  flex:1; padding:clamp(7px,1.1vh,11px) 6px;
+  font-size:clamp(10px,1.3vh,13px);
+}
+.btn-ace { background:rgba(0,166,81,0.15); color:var(--green); border:1px solid var(--green); }
+.btn-ace:hover { background:rgba(0,166,81,0.3); }
+.btn-flt { background:rgba(255,59,59,0.1); color:var(--red); border:1px solid var(--red); }
+.btn-flt:hover { background:rgba(255,59,59,0.25); }
+.btn-undo { background:rgba(255,255,255,0.07); color:var(--white); border:1px solid #2a2a4a; }
+.btn-undo:hover { border-color:var(--white); }
+.btn-rst { background:rgba(255,59,59,0.07); color:var(--red); border:1px solid rgba(255,59,59,0.3); }
+.btn-rst:hover { background:rgba(255,59,59,0.2); }
+.btn-tb { background:rgba(201,168,76,0.12); color:var(--gold); border:1px solid rgba(201,168,76,0.4); }
+.btn-tb:hover { background:rgba(201,168,76,0.22); }
+
+/* 폴트 탭 */
+.fault-tab { display:flex; flex-direction:column; gap:12px; }
+.fault-info {
+  display:flex; align-items:center; gap:12px;
+  font-family:'Oswald',sans-serif; font-size:14px;
+  letter-spacing:1px; color:var(--dim);
+}
+.fd { display:flex; gap:8px; }
+.fd-dot {
+  width:18px; height:18px; border-radius:50%; background:#1a1a2e; transition:background 0.2s;
+}
+.fd-dot.on { background:var(--red); box-shadow:0 0 8px var(--red); }
+.fault-btns { display:flex; gap:8px; }
+
+/* 설정 탭 */
+.setup-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.setup-item { display:flex; flex-direction:column; gap:4px; }
+.setup-item label {
+  font-family:'Oswald',sans-serif; font-size:11px; color:var(--dim);
+  letter-spacing:2px;
+}
+.setup-item input {
+  background:#0d0f1e; border:1px solid #1a1a2e; color:var(--white);
+  font-family:'Oswald',sans-serif; font-size:clamp(13px,2vh,17px);
+  padding:9px 10px; border-radius:4px; letter-spacing:1px; outline:none;
+}
+.setup-item input:focus { border-color:var(--blue); }
+.setup-item.full { grid-column:1/-1; }
+.btn-apply {
+  width:100%; padding:11px; font-size:14px; letter-spacing:2px;
+  background:var(--blue); color:#fff; border-radius:4px;
+}
+.btn-apply:hover { background:#0066ff; }
+
+/* 위너 오버레이 */
+#winner-screen {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.93);
+  z-index:200; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+}
+#winner-screen.show { display:flex; }
+.w-title { font-size:clamp(11px,2vh,18px); letter-spacing:6px; color:var(--dim); font-family:'Oswald',sans-serif; }
+.w-name { font-size:clamp(40px,10vw,100px); color:var(--gold); text-shadow:0 0 40px rgba(201,168,76,0.5); letter-spacing:4px; }
+.w-score { font-size:clamp(14px,2.5vh,24px); color:var(--dim); letter-spacing:4px; font-family:'Oswald',sans-serif; font-weight:300; }
+.btn-new {
+  padding:14px 40px; font-size:15px; background:var(--blue); color:#fff;
+  border-radius:4px; margin-top:10px; letter-spacing:2px; cursor:pointer;
+}
+.btn-new:hover { background:#0066ff; }
 </style>
 </head>
 <body>
 
-<div id="topUI">
-  <div class="header">
-    <div class="sub">Tennis Doubles</div>
-    <h1>🎾 복식 전술판</h1>
-  </div>
-  <div class="presets">
-    <button class="preset-btn active" data-preset="basic">기본</button>
-    <button class="preset-btn" data-preset="bothUp">양쪽전위</button>
-    <button class="preset-btn" data-preset="bothBack">양쪽후위</button>
-    <button class="preset-btn" data-preset="iForm">I포메이션</button>
-    <button class="preset-btn" data-preset="aus">호주</button>
-  </div>
-  <div class="desc-box" id="descBox">💡 전위/후위 기본 대형</div>
+<!-- 세로 모드 안내 -->
+<div id="rotate-msg" style="display:none;position:fixed;inset:0;background:#0a0d1a;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:20px;color:#ffd84d;font-family:'Oswald',sans-serif;letter-spacing:3px;text-align:center;">
+  <div style="font-size:60px;">📱</div>
+  <div style="font-size:clamp(16px,4vw,24px);font-weight:700;">가로로 돌려주세요</div>
+  <div style="font-size:clamp(12px,2.5vw,16px);color:#7a7aaa;margin-top:8px;">ROTATE TO LANDSCAPE</div>
 </div>
 
-<div id="courtWrap">
-  <canvas id="court"></canvas>
+<!-- ══ 메인 화면 ══ -->
+<div id="main" onclick="handleMainTap(event)">
+
+  <!-- 상단 -->
+  <div id="top-bar">
+    <div id="match-title">🎾 동호인 테니스</div>
+    <div id="set-display">게임 <span id="top-g1">0</span> - <span id="top-g2">0</span></div>
+  </div>
+
+  <!-- 상태 메시지 -->
+  <div id="status-msg"></div>
+
+  <!-- 메인 점수 -->
+  <div id="score-area">
+
+    <div class="player-block" id="pb1">
+      <div class="serve-dot on" id="sdot1"></div>
+      <div class="p-name" id="name1-d">선수 1</div>
+      <div class="p-pts" id="pts1-d">0</div>
+    </div>
+
+    <div id="divider"></div>
+
+    <div class="player-block" id="pb2">
+      <div class="serve-dot" id="sdot2"></div>
+      <div class="p-name" id="name2-d">선수 2</div>
+      <div class="p-pts" id="pts2-d">0</div>
+    </div>
+
+  </div>
+
+  <!-- 게임 스코어 (하단) -->
+  <div id="game-row">
+    <div style="text-align:right">
+      <div class="g-label">게임</div>
+      <div id="gsc1" class="g-score">0</div>
+    </div>
+    <div style="font-size:clamp(16px,3vh,30px);color:var(--dim)">—</div>
+    <div>
+      <div class="g-label">게임</div>
+      <div id="gsc2" class="g-score">0</div>
+    </div>
+  </div>
+
+  <div id="tap-hint">화면을 탭하면 메뉴가 열립니다</div>
 </div>
 
-<button id="toggleHint" title="버튼 보이기/숨기기">☰</button>
+<!-- ══ 컨트롤 패널 ══ -->
+<div id="ctrl-panel">
+  <div id="ctrl-backdrop" onclick="closePanel()"></div>
+  <div id="ctrl-box">
+    <div id="close-handle" onclick="closePanel()"></div>
 
-<div id="bottomUI">
-  <div class="controls">
-    <button class="ctrl-btn" id="btnArrow">➡️ 화살표</button>
-    <button class="ctrl-btn" id="btnDraw">✏️ 그리기</button>
-    <button class="ctrl-btn cover-on" id="btnCover">⭕ 커버존</button>
-    <button class="ctrl-btn ball-on"  id="btnBall">🎾 공</button>
-    <button class="ctrl-btn angle-on" id="btnAngle">📐 타구각</button>
-    <button class="ctrl-btn del"   id="btnDel">🗑️ 삭제</button>
-    <button class="ctrl-btn reset" id="btnReset">🔄 초기화</button>
-  </div>
-  <div class="controls" style="margin-top:2px;">
-    <button class="ctrl-btn" id="btnBoardStyle">🎨 보드설정</button>
-    <button class="ctrl-btn" id="btnSave">💾 저장</button>
-    <button class="ctrl-btn" id="btnLoad">📂 불러오기</button>
-    <button class="ctrl-btn" id="btnShare">🔗 공유</button>
-  </div>
-  <div class="guide" id="guide">
-    선수 탭 → 선택(타구각) &nbsp;·&nbsp; 더블탭 → 편집 &nbsp;·&nbsp; 드래그 → 이동
-  </div>
-</div>
+    <!-- 탭 버튼 (3개만: 점수, 폴트, 설정) -->
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('score')">🎾 점수</button>
+      <button class="tab-btn" onclick="switchTab('fault')">✖ 폴트</button>
+      <button class="tab-btn" onclick="switchTab('setup')">⚙ 설정</button>
+    </div>
 
-<div id="toast"></div>
-
-<!-- 선수 편집 -->
-<div class="modal-overlay hidden" id="modalPlayer">
-  <div class="modal-box">
-    <div class="modal-title">✏️ 선수 편집</div>
-    <div class="modal-row">
-      <div class="modal-label">이름 (예: 김철수)</div>
-      <input class="modal-input" id="editName" maxlength="6" placeholder="이름 입력">
-    </div>
-    <div class="modal-row">
-      <div class="modal-label">등번호</div>
-      <input class="modal-input" id="editNumber" type="number" min="0" max="99" maxlength="3" placeholder="번호 입력">
-    </div>
-    <div class="modal-row">
-      <div class="modal-label">포지션 (예: 전위 / 서버)</div>
-      <input class="modal-input" id="editPosition" maxlength="6" placeholder="포지션 입력">
-    </div>
-    <div class="modal-row">
-      <div class="modal-label">선수 색상</div>
-      <div class="color-swatches" id="colorSwatches"></div>
-    </div>
-    <div class="modal-row">
-      <div class="modal-label">선수 크기</div>
-      <select class="modal-input" id="editSize">
-        <option value="0.8">작게</option>
-        <option value="1" selected>보통</option>
-        <option value="1.3">크게</option>
-      </select>
-    </div>
-    <div class="modal-btns">
-      <button class="modal-btn cancel" id="editCancel">취소</button>
-      <button class="modal-btn ok" id="editOk">확인</button>
-    </div>
-  </div>
-</div>
-
-<!-- 보드 설정 -->
-<div class="modal-overlay hidden" id="modalBoard">
-  <div class="modal-box">
-    <div class="modal-title">🎨 보드 설정</div>
-    <div class="modal-row">
-      <div class="modal-label">코트 테마</div>
-      <div class="theme-row" id="themeRow">
-        <button class="theme-chip selected" data-theme="green">🟩 그린</button>
-        <button class="theme-chip" data-theme="clay">🧱 클레이</button>
-        <button class="theme-chip" data-theme="hard">🔵 하드</button>
-        <button class="theme-chip" data-theme="dark">⚫ 다크</button>
-        <button class="theme-chip" data-theme="grass">🌿 잔디</button>
+    <!-- 점수 탭 -->
+    <div class="tab-content active" id="tab-score">
+      <div class="score-tab-grid">
+        <!-- 선수 1 -->
+        <div class="p-ctrl" id="pctrl1">
+          <div class="p-ctrl-name" id="c-name1">선수 1</div>
+          <div class="btn-group">
+            <button class="btn-pt" onclick="addPoint(0);closePanel()">⚡ 포인트</button>
+          </div>
+          <div class="btn-group" id="srv-btns-1" style="display:none">
+            <button class="btn-sm btn-ace" onclick="addAce(0);closePanel()">🎯 에이스</button>
+            <button class="btn-sm btn-flt" onclick="addFault(0);closePanel()">폴트</button>
+          </div>
+        </div>
+        <!-- 선수 2 -->
+        <div class="p-ctrl" id="pctrl2">
+          <div class="p-ctrl-name b" id="c-name2">선수 2</div>
+          <div class="btn-group">
+            <button class="btn-pt" onclick="addPoint(1);closePanel()">⚡ 포인트</button>
+          </div>
+          <div class="btn-group" id="srv-btns-2" style="display:none">
+            <button class="btn-sm btn-ace" onclick="addAce(1);closePanel()">🎯 에이스</button>
+            <button class="btn-sm btn-flt" onclick="addFault(1);closePanel()">폴트</button>
+          </div>
+        </div>
+      </div>
+      <!-- 공통 버튼 -->
+      <div class="btn-group">
+        <button class="btn-sm btn-undo" onclick="undoPoint();closePanel()">↩ 되돌리기</button>
+        <button class="btn-sm btn-tb" onclick="setTiebreak();closePanel()">🔀 타이브레이크</button>
+        <button class="btn-sm btn-rst" onclick="resetMatch();closePanel()">↺ 초기화</button>
       </div>
     </div>
-    <div class="modal-row">
-      <div class="modal-label">전체 선수 크기</div>
-      <select class="modal-input" id="boardSize">
-        <option value="0.8">작게</option>
-        <option value="1" selected>보통</option>
-        <option value="1.3">크게</option>
-      </select>
+
+    <!-- 폴트 탭 -->
+    <div class="tab-content" id="tab-fault">
+      <div class="fault-tab">
+        <div class="fault-info">
+          <span>현재 폴트</span>
+          <div class="fd">
+            <div class="fd-dot" id="fd1"></div>
+            <div class="fd-dot" id="fd2"></div>
+          </div>
+          <span style="margin-left:8px">더블폴트: <span id="df-cnt" style="color:var(--red)">0</span>회</span>
+        </div>
+        <div class="fault-btns">
+          <button class="btn-sm btn-flt" style="flex:1;padding:12px;font-size:14px" onclick="addFault(0);closePanel()">선수1 폴트</button>
+          <button class="btn-sm btn-flt" style="flex:1;padding:12px;font-size:14px" onclick="addFault(1);closePanel()">선수2 폴트</button>
+        </div>
+        <button class="btn-sm btn-undo" style="width:100%;padding:10px" onclick="resetFaults()">폴트 초기화</button>
+      </div>
     </div>
-    <div class="modal-row">
-      <div class="modal-label">그리기 색상</div>
-      <div class="color-swatches" id="drawColorSwatches"></div>
+
+    <!-- 설정 탭 -->
+    <div class="tab-content" id="tab-setup">
+      <div class="setup-grid">
+        <div class="setup-item">
+          <label>선수 1 이름</label>
+          <input type="text" id="in-name1" value="선수 1" placeholder="선수 1 이름">
+        </div>
+        <div class="setup-item">
+          <label>선수 2 이름</label>
+          <input type="text" id="in-name2" value="선수 2" placeholder="선수 2 이름">
+        </div>
+        <div class="setup-item full">
+          <label>경기 제목</label>
+          <input type="text" id="in-title" value="동호인 테니스" placeholder="대회명 또는 경기명">
+        </div>
+      </div>
+      <button class="btn-apply" onclick="applySetup();closePanel()">✔ 적용하기</button>
     </div>
-    <div class="modal-btns">
-      <button class="modal-btn cancel" id="boardClose">닫기</button>
-      <button class="modal-btn ok" id="boardOk">적용</button>
-    </div>
+
   </div>
 </div>
 
-<!-- 저장 이름 -->
-<div class="modal-overlay hidden" id="modalSaveName">
-  <div class="modal-box">
-    <div class="modal-title">💾 전술판 저장</div>
-    <div class="modal-row">
-      <div class="modal-label">저장 이름</div>
-      <input class="modal-input" id="saveNameInput" placeholder="예: 서브 후 전술" maxlength="20">
-    </div>
-    <div class="modal-btns">
-      <button class="modal-btn cancel" id="saveNameCancel">취소</button>
-      <button class="modal-btn ok" id="saveNameOk">저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- 불러오기 -->
-<div class="modal-overlay hidden" id="modalLoad">
-  <div class="modal-box" style="min-width:320px;">
-    <div class="modal-title">📂 저장된 전술판</div>
-    <div id="slotList" style="max-height:260px;overflow-y:auto;"></div>
-    <div class="modal-btns">
-      <button class="modal-btn cancel" id="loadClose">닫기</button>
-    </div>
-  </div>
-</div>
-
-<!-- 공유 -->
-<div class="modal-overlay hidden" id="modalShare">
-  <div class="modal-box">
-    <div class="modal-title">🔗 보드 공유</div>
-    <div class="modal-label" style="margin-bottom:6px;line-height:1.6;">
-      현재 전술판이 URL에 담겼어요.<br>복사해서 카카오톡 등으로 보내세요!
-    </div>
-    <div class="share-link-box" id="shareLinkBox">—</div>
-    <div class="modal-btns">
-      <button class="modal-btn cancel" id="shareClose">닫기</button>
-      <button class="modal-btn ok" id="shareCopy">📋 링크 복사</button>
-    </div>
-  </div>
+<!-- 위너 화면 -->
+<div id="winner-screen">
+  <div class="w-title">🏆 경기 승자</div>
+  <div class="w-name" id="w-name">-</div>
+  <div class="w-score" id="w-score"></div>
+  <button class="btn-new" onclick="resetMatch()">↺ 새 경기 시작</button>
 </div>
 
 <script>
-// ── 논리 좌표 ──
-const LW=520, LH=820;
-const MARGIN_X=80, MARGIN_T=60, MARGIN_B=60;
-const CL=MARGIN_X, CR=LW-MARGIN_X, CT=MARGIN_T, CB=LH-MARGIN_B;
-const CW=CR-CL, CH=CB-CT;
-const NET_Y=(CT+CB)/2;
-const ALLY_W=CW*0.107, ALLY_L=CL+ALLY_W, ALLY_R=CR-ALLY_W;
-const SVC_GAP=CH*0.228, SVC_T=CT+SVC_GAP, SVC_B=CB-SVC_GAP;
-const CX_L=(CL+CR)/2;
+/* ─── 상수 ─── */
+const PTXT = ['0','15','30','40'];
 
-// ── 색상 팔레트 ──
-const COLOR_PALETTE=[
-  "#38d9f5","#4ade80","#f87171","#fb923c",
-  "#c084fc","#f472b6","#facc15","#60a5fa",
-  "#34d399","#ff6b6b","#a78bfa","#fbbf24"
-];
-const DRAW_COLORS=["#ff6bcb","#FFD93D","#4ade80","#f87171","#38d9f5","#ffffff","#000000"];
+/* ─── 상태 ─── */
+let S = freshState();
 
-// ── 선수 정보 ──
-let PINFO={
-  M1:{main:"#38d9f5",dark:"#0ea5c9",shadow:"rgba(56,217,245,0.6)", label:"우1",team:"mine",name:"",number:"",position:"",size:1},
-  M2:{main:"#4ade80",dark:"#16a34a",shadow:"rgba(74,222,128,0.6)", label:"우2",team:"mine",name:"",number:"",position:"",size:1},
-  O1:{main:"#f87171",dark:"#dc2626",shadow:"rgba(248,113,113,0.6)",label:"상1",team:"opp", name:"",number:"",position:"",size:1},
-  O2:{main:"#fb923c",dark:"#ea580c",shadow:"rgba(251,146,60,0.6)", label:"상2",team:"opp", name:"",number:"",position:"",size:1},
-};
-const KEYS=["M1","M2","O1","O2"];
-
-function shadeHex(hex,amt){
-  let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-  r=Math.max(0,Math.min(255,r+amt)); g=Math.max(0,Math.min(255,g+amt)); b=Math.max(0,Math.min(255,b+amt));
-  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
-}
-function hexToRgba(hex,a){
-  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-  return `rgba(${r},${g},${b},${a})`;
-}
-function updateDark(key){
-  PINFO[key].dark=shadeHex(PINFO[key].main,-40);
-  PINFO[key].shadow=hexToRgba(PINFO[key].main,0.6);
+function freshState() {
+  return {
+    serving: 0,
+    pts: [0, 0],
+    games: [0, 0],
+    deuce: false,
+    tb: false,
+    tbPts: [0, 0],
+    faults: 0,
+    dfs: 0,
+    over: false,
+    history: [],
+  };
 }
 
-// ── 테마 ──
-const THEMES={
-  green:{bg:"#1a3d25",courtGrad:["#1c7840","#186535","#155d2e","#125228"],ally:"rgba(0,0,0,0.07)",net:"rgba(0,0,0,0.18)",l1:"rgba(56,217,245,0.3)",l2:"rgba(248,113,113,0.3)"},
-  clay: {bg:"#3d2010",courtGrad:["#c4622d","#b5561f","#a84e18","#9a4712"],ally:"rgba(0,0,0,0.09)",net:"rgba(0,0,0,0.2)",l1:"rgba(255,220,150,0.4)",l2:"rgba(255,180,100,0.4)"},
-  hard: {bg:"#0d1f3d",courtGrad:["#1a3a7c","#163272","#122b68","#0e245e"],ally:"rgba(255,255,255,0.05)",net:"rgba(0,0,0,0.2)",l1:"rgba(100,200,255,0.35)",l2:"rgba(255,150,100,0.35)"},
-  dark: {bg:"#0a0a0a",courtGrad:["#1a1a2e","#16213e","#0f3460","#1a1a2e"],ally:"rgba(255,255,255,0.04)",net:"rgba(0,0,0,0.3)",l1:"rgba(130,130,255,0.35)",l2:"rgba(255,100,130,0.35)"},
-  grass:{bg:"#0d2e10",courtGrad:["#2d6a30","#255e28","#1e5222","#174618"],ally:"rgba(0,0,0,0.06)",net:"rgba(0,0,0,0.18)",l1:"rgba(180,255,140,0.35)",l2:"rgba(255,200,100,0.35)"},
-};
-let currentTheme="green";
-let globalSize=1;
-let drawColor="#ff6bcb";
+/* ─── 패널 ─── */
+let panelOpen = false;
 
-// ── 프리셋 ──
-const PRESETS={
-  basic:   {desc:"💡 전위/후위 기본 대형",    M1:{x:CX_L-50,y:CB-60,role:"후위"},M2:{x:CX_L+50,y:SVC_B+30,role:"전위"},O1:{x:CX_L+50,y:CT+60,role:"후위"},O2:{x:CX_L-50,y:SVC_T-30,role:"전위"}},
-  bothUp:  {desc:"💡 둘 다 네트 앞으로",      M1:{x:CX_L-55,y:SVC_B+40,role:"전위"},M2:{x:CX_L+55,y:SVC_B+40,role:"전위"},O1:{x:CX_L+55,y:SVC_T-40,role:"전위"},O2:{x:CX_L-55,y:SVC_T-40,role:"전위"}},
-  bothBack:{desc:"💡 둘 다 베이스라인 수비",  M1:{x:CX_L-60,y:CB-40,role:"후위"},M2:{x:CX_L+60,y:CB-40,role:"후위"},O1:{x:CX_L+60,y:CT+40,role:"후위"},O2:{x:CX_L-60,y:CT+40,role:"후위"}},
-  iForm:   {desc:"💡 서버+전위 센터에 겹치기",M1:{x:CX_L,y:CB-50,role:"서버"},M2:{x:CX_L,y:SVC_B+30,role:"전위"},O1:{x:CX_L+60,y:CT+50,role:"후위"},O2:{x:CX_L-50,y:SVC_T-30,role:"전위"}},
-  aus:     {desc:"💡 서버+전위 같은 사이드",  M1:{x:CX_L-60,y:CB-50,role:"서버"},M2:{x:CX_L-60,y:SVC_B+30,role:"전위"},O1:{x:CX_L+60,y:CT+50,role:"후위"},O2:{x:CX_L+60,y:SVC_T-30,role:"전위"}},
-};
-
-// ── 상태 ──
-let players={}, ball={x:CX_L,y:NET_Y+60};
-let arrows=[], arrowDraw=null, mousePos={x:0,y:0};
-let mode="drag";
-let showCover=true, showBall=true, showAngle=true;
-let dragging=null, dragMoved=false;
-let activePreset="basic";
-let selectedKeys=new Set();
-let drawPaths=[], currentPath=null, isDrawing=false;
-let lastTap={key:null,time:0};
-let tapStartPos=null;
-
-// ── UI 토글 ──
-let uiVisible=false;
-const topUI=document.getElementById("topUI");
-const bottomUI=document.getElementById("bottomUI");
-function setUIVisible(v){
-  uiVisible=v;
-  topUI.classList.toggle("hidden",!v);
-  bottomUI.classList.toggle("hidden",!v);
+function handleMainTap(e) {
+  if (panelOpen) return;
+  openPanel();
 }
-setUIVisible(false);
-document.getElementById("toggleHint").addEventListener("click",e=>{e.stopPropagation();setUIVisible(!uiVisible);});
-
-// ── 캔버스 ──
-const canvas=document.getElementById("court");
-const ctx=canvas.getContext("2d");
-
-function layoutCanvas(){
-  const aH=window.innerHeight, aW=window.innerWidth;
-  const ratio=LW/LH; let cw,ch;
-  if(aW/aH<ratio){cw=aW;ch=aW/ratio;}else{ch=aH;cw=aH*ratio;}
-  cw=Math.floor(cw); ch=Math.floor(ch);
-  const dpr=window.devicePixelRatio||1;
-  canvas.width=cw*dpr; canvas.height=ch*dpr;
-  canvas.style.width=cw+"px"; canvas.style.height=ch+"px";
-  draw();
+function openPanel() {
+  panelOpen = true;
+  document.getElementById('ctrl-panel').classList.add('open');
+  document.getElementById('tap-hint').style.display = 'none';
+  updateServeBtns();
 }
-function px(v){return v*canvas.width/LW;}
-function py(v){return v*canvas.height/LH;}
-function line(x1,y1,x2,y2){ctx.beginPath();ctx.moveTo(px(x1),py(y1));ctx.lineTo(px(x2),py(y2));ctx.stroke();}
 
-// ── 선수 그리기 ──
-function isNearNet(key,pos){
-  const m=key.startsWith("M");
-  return m?pos.y<NET_Y-30:pos.y>NET_Y+30;
+function updateServeBtns() {
+  document.getElementById('srv-btns-1').style.display = S.serving === 0 ? 'flex' : 'none';
+  document.getElementById('srv-btns-2').style.display = S.serving === 1 ? 'flex' : 'none';
 }
-function getLabel(key){return PINFO[key].number||PINFO[key].label;}
+function closePanel() {
+  panelOpen = false;
+  document.getElementById('ctrl-panel').classList.remove('open');
+  document.getElementById('tap-hint').style.display = '';
+}
+function switchTab(name) {
+  const tabs = ['score','fault','setup'];
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i]===name));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
 
-function drawPerson(key,pos){
-  const c=PINFO[key];
-  const S=py(28)*(c.size||1)*globalSize;
-  const isSel=selectedKeys.has(key);
-  const cx=px(pos.x), cy=py(pos.y);
-  const volley=isNearNet(key,pos);
-  ctx.save();
+/* ─── 포인트 로직 ─── */
+function addPoint(p) {
+  if (S.over) return;
+  saveHist();
+  S.faults = 0;
+  updateFaultDots();
 
-  if(isSel){
-    ctx.shadowBlur=28; ctx.shadowColor=c.shadow;
-    ctx.strokeStyle=c.main; ctx.lineWidth=px(3.5);
-    ctx.beginPath(); ctx.ellipse(cx,cy-S*0.6,S*0.78,S*1.18,0,0,Math.PI*2); ctx.stroke();
-    ctx.shadowBlur=0;
+  // 타이브레이크
+  if (S.tb) {
+    S.tbPts[p]++;
+    // 2점마다 서브 교대
+    if ((S.tbPts[0]+S.tbPts[1]) % 2 === 1) S.serving = 1-S.serving;
+    checkTBWin(p);
+    render(); return;
   }
-  ctx.fillStyle="rgba(0,0,0,0.25)";
-  ctx.beginPath(); ctx.ellipse(cx+px(2),cy+py(2),S*0.5,S*0.18,0,0,Math.PI*2); ctx.fill();
 
-  if(volley){
-    ctx.strokeStyle=c.dark; ctx.lineWidth=px(6.5)*(c.size||1)*globalSize; ctx.lineCap="round";
-    ctx.shadowBlur=6; ctx.shadowColor=c.shadow;
-    ctx.beginPath(); ctx.moveTo(cx-S*0.05,cy-S*0.18); ctx.lineTo(cx-S*0.32,cy+S*0.12); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx-S*0.05,cy-S*0.18); ctx.lineTo(cx+S*0.28,cy+S*0.08); ctx.stroke();
-    ctx.fillStyle=c.main; ctx.strokeStyle=c.dark; ctx.lineWidth=px(1.5);
-    ctx.shadowBlur=10; ctx.shadowColor=c.shadow;
-    ctx.beginPath();
-    ctx.moveTo(cx-S*0.40,cy-S*0.62); ctx.lineTo(cx+S*0.30,cy-S*0.68);
-    ctx.lineTo(cx+S*0.20,cy-S*0.20); ctx.lineTo(cx-S*0.20,cy-S*0.18);
-    ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
-    ctx.fillStyle="rgba(255,255,255,0.18)";
-    ctx.beginPath();
-    ctx.moveTo(cx-S*0.32,cy-S*0.59); ctx.lineTo(cx+S*0.12,cy-S*0.64);
-    ctx.lineTo(cx+S*0.08,cy-S*0.38); ctx.lineTo(cx-S*0.20,cy-S*0.36);
-    ctx.closePath(); ctx.fill();
-    ctx.strokeStyle=c.dark; ctx.lineWidth=px(5)*(c.size||1)*globalSize; ctx.lineCap="round";
-    ctx.beginPath(); ctx.moveTo(cx-S*0.40,cy-S*0.62); ctx.lineTo(cx-S*0.72,cy-S*0.50); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx+S*0.30,cy-S*0.68); ctx.lineTo(cx+S*0.46,cy-S*0.45); ctx.stroke();
-    ctx.save(); ctx.translate(cx-S*0.82,cy-S*0.46); ctx.rotate(-0.2);
-    ctx.strokeStyle=c.main; ctx.lineWidth=px(2.5);
-    ctx.beginPath(); ctx.ellipse(0,0,S*0.18,S*0.12,0,0,Math.PI*2); ctx.stroke();
-    ctx.strokeStyle="rgba(255,255,255,0.5)"; ctx.lineWidth=px(1);
-    ctx.beginPath(); ctx.moveTo(-S*0.18,0); ctx.lineTo(S*0.18,0); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0,-S*0.12); ctx.lineTo(0,S*0.12); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(S*0.16,S*0.06); ctx.lineTo(S*0.32,S*0.16);
-    ctx.strokeStyle=c.dark; ctx.lineWidth=px(3.5)*(c.size||1)*globalSize; ctx.stroke();
-    ctx.restore();
-    ctx.shadowBlur=8; ctx.shadowColor=c.shadow;
-    ctx.fillStyle=c.main; ctx.strokeStyle=c.dark; ctx.lineWidth=px(2);
-    ctx.beginPath(); ctx.arc(cx-S*0.05,cy-S*0.95,S*0.28,0,Math.PI*2);
-    ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
-    ctx.strokeStyle="rgba(255,255,255,0.55)"; ctx.lineWidth=px(2.5);
-    ctx.beginPath(); ctx.arc(cx-S*0.05,cy-S*0.95,S*0.28,Math.PI*0.85,Math.PI*2.15); ctx.stroke();
-    ctx.fillStyle="rgba(255,255,255,0.3)";
-    ctx.beginPath(); ctx.arc(cx-S*0.13,cy-S*1.06,S*0.1,0,Math.PI*2); ctx.fill();
-    drawPlayerLabel(key,cx-S*0.05,cy-S*0.95,S);
+  const o = 1-p;
+
+  // 듀스 상태
+  if (S.deuce) {
+    if (S.pts[p] === 4) {
+      winGame(p);
+    } else if (S.pts[o] === 4) {
+      // 어드 상대방이었다면 듀스로
+      S.pts[o] = 3;
+    } else {
+      S.pts[p] = 4; // 어드밴티지
+    }
+    render(); return;
+  }
+
+  S.pts[p]++;
+
+  // 40-40 → 듀스
+  if (S.pts[0]===3 && S.pts[1]===3) {
+    S.deuce = true; S.pts=[3,3]; render(); return;
+  }
+  if (S.pts[p] >= 4) winGame(p); else render();
+}
+
+function winGame(p) {
+  S.games[p]++;
+  S.pts=[0,0]; S.deuce=false; S.faults=0;
+  S.serving = 1-S.serving;
+  checkSetWin(p);
+}
+
+function checkSetWin(p) {
+  const o=1-p, pg=S.games[p], og=S.games[o];
+  // 5-5 → 타이브레이크
+  if (pg===5 && og===5) {
+    S.tb=true; S.tbPts=[0,0];
+    flashStatus('🔀 타이브레이크!', 1800);
+    render(); return;
+  }
+  // 6게임 이상, 2게임차 → 세트 승리 (단, 5-5 이전만)
+  const won = (pg>=6 && pg-og>=2) || pg===7;
+  if (won) {
+    endMatch(p);
   } else {
-    ctx.strokeStyle=c.dark; ctx.lineWidth=px(6.5)*(c.size||1)*globalSize; ctx.lineCap="round";
-    ctx.shadowBlur=6; ctx.shadowColor=c.shadow;
-    ctx.beginPath(); ctx.moveTo(cx,cy-S*0.22); ctx.lineTo(cx-S*0.28,cy+S*0.10); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx,cy-S*0.22); ctx.lineTo(cx+S*0.28,cy+S*0.10); ctx.stroke();
-    ctx.fillStyle=c.main; ctx.strokeStyle=c.dark; ctx.lineWidth=px(1.5);
-    ctx.shadowBlur=10; ctx.shadowColor=c.shadow;
-    ctx.beginPath();
-    ctx.moveTo(cx-S*0.40,cy-S*0.68); ctx.lineTo(cx+S*0.36,cy-S*0.65);
-    ctx.lineTo(cx+S*0.24,cy-S*0.22); ctx.lineTo(cx-S*0.24,cy-S*0.22);
-    ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
-    ctx.fillStyle="rgba(255,255,255,0.18)";
-    ctx.beginPath();
-    ctx.moveTo(cx-S*0.32,cy-S*0.65); ctx.lineTo(cx+S*0.12,cy-S*0.64);
-    ctx.lineTo(cx+S*0.08,cy-S*0.40); ctx.lineTo(cx-S*0.22,cy-S*0.40);
-    ctx.closePath(); ctx.fill();
-    ctx.strokeStyle=c.dark; ctx.lineWidth=px(5)*(c.size||1)*globalSize; ctx.lineCap="round";
-    ctx.beginPath(); ctx.moveTo(cx+S*0.36,cy-S*0.65); ctx.lineTo(cx+S*0.68,cy-S*0.38); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx-S*0.40,cy-S*0.68); ctx.lineTo(cx-S*0.58,cy-S*0.46); ctx.stroke();
-    ctx.save(); ctx.translate(cx+S*0.78,cy-S*0.30); ctx.rotate(0.6);
-    ctx.strokeStyle=c.main; ctx.lineWidth=px(2.5);
-    ctx.beginPath(); ctx.ellipse(0,0,S*0.20,S*0.13,0,0,Math.PI*2); ctx.stroke();
-    ctx.strokeStyle="rgba(255,255,255,0.5)"; ctx.lineWidth=px(1);
-    ctx.beginPath(); ctx.moveTo(-S*0.20,0); ctx.lineTo(S*0.20,0); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0,-S*0.13); ctx.lineTo(0,S*0.13); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(-S*0.18,S*0.08); ctx.lineTo(-S*0.34,S*0.20);
-    ctx.strokeStyle=c.dark; ctx.lineWidth=px(3.5)*(c.size||1)*globalSize; ctx.stroke();
-    ctx.restore();
-    ctx.shadowBlur=8; ctx.shadowColor=c.shadow;
-    ctx.fillStyle=c.main; ctx.strokeStyle=c.dark; ctx.lineWidth=px(2);
-    ctx.beginPath(); ctx.arc(cx,cy-S*0.92,S*0.28,0,Math.PI*2);
-    ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
-    ctx.strokeStyle="rgba(255,255,255,0.55)"; ctx.lineWidth=px(2.5);
-    ctx.beginPath(); ctx.arc(cx,cy-S*0.92,S*0.28,Math.PI*0.85,Math.PI*2.15); ctx.stroke();
-    ctx.fillStyle="rgba(255,255,255,0.3)";
-    ctx.beginPath(); ctx.arc(cx-S*0.08,cy-S*1.03,S*0.10,0,Math.PI*2); ctx.fill();
-    drawPlayerLabel(key,cx,cy-S*0.92,S);
-  }
-  ctx.restore();
-}
-
-function drawPlayerLabel(key,hx,hy,S){
-  const c=PINFO[key];
-  // 번호 레이블
-  const lw=py(20),lh=py(12);
-  ctx.fillStyle="rgba(0,0,0,0.5)";
-  ctx.beginPath(); ctx.roundRect(hx-lw/2,hy-lh/2,lw,lh,3); ctx.fill();
-  ctx.fillStyle=c.main; ctx.font=`900 ${py(11)}px 'Apple SD Gothic Neo',sans-serif`;
-  ctx.textAlign="center"; ctx.textBaseline="middle";
-  ctx.fillText(getLabel(key),hx,hy);
-  // 이름+포지션
-  const name=c.name||"", pos=c.position||"";
-  if(name||pos){
-    const iy=hy+S*0.42;
-    const iw=py(name?46:32), ih=py(name&&pos?22:13);
-    ctx.fillStyle="rgba(0,0,0,0.55)";
-    ctx.beginPath(); ctx.roundRect(hx-iw/2,iy-ih/2,iw,ih,4); ctx.fill();
-    ctx.fillStyle=c.main;
-    if(name&&pos){
-      ctx.font=`700 ${py(9)}px 'Apple SD Gothic Neo',sans-serif`;
-      ctx.fillText(name,hx,iy-py(5));
-      ctx.fillStyle="rgba(255,255,255,0.6)";
-      ctx.font=`${py(8)}px 'Apple SD Gothic Neo',sans-serif`;
-      ctx.fillText(pos,hx,iy+py(5));
-    } else if(name){
-      ctx.font=`700 ${py(9)}px 'Apple SD Gothic Neo',sans-serif`;
-      ctx.fillText(name,hx,iy);
-    } else {
-      ctx.fillStyle="rgba(255,255,255,0.7)";
-      ctx.font=`${py(8)}px 'Apple SD Gothic Neo',sans-serif`;
-      ctx.fillText(pos,hx,iy);
-    }
+    render();
   }
 }
 
-// ── 커버존 ──
-function getCoverR(key,pos){const m=key.startsWith("M");return(m?pos.y>NET_Y+60:pos.y<NET_Y-60)?90:60;}
-function drawCoverZone(key,pos){
-  const r=getCoverR(key,pos), c=PINFO[key];
-  ctx.save();
-  ctx.fillStyle=hexToRgba(c.main,0.13);
-  ctx.beginPath(); ctx.arc(px(pos.x),py(pos.y),px(r),0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle=hexToRgba(c.main,0.5); ctx.lineWidth=1.5; ctx.setLineDash([5,4]);
-  ctx.beginPath(); ctx.arc(px(pos.x),py(pos.y),px(r),0,Math.PI*2); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.restore();
-}
-
-// ── 타구각 ──
-function drawShotAngles(key,pos){
-  const c=PINFO[key]; const bx=pos.x, by=pos.y;
-  const isMy=key.startsWith("M");
-  const tYf=isMy?CT:CB, tYn=isMy?NET_Y+8:NET_Y-8;
-  const corners=[{x:CL,y:tYf},{x:CR,y:tYf},{x:CL,y:tYn},{x:CR,y:tYn}];
-  const angs=corners.map(c=>Math.atan2(c.y-by,c.x-bx));
-  let mn=Math.min(...angs), mx=Math.max(...angs);
-  if(mx-mn>Math.PI)[mn,mx]=[mx,mn+Math.PI*2];
-  const fanR=LH*0.52;
-  ctx.save();
-  ctx.globalAlpha=0.13; ctx.fillStyle=c.main;
-  ctx.beginPath(); ctx.moveTo(px(bx),py(by));
-  ctx.arc(px(bx),py(by),px(fanR),mn,mx,false); ctx.closePath(); ctx.fill();
-  ctx.globalAlpha=0.7; ctx.strokeStyle=c.main; ctx.lineWidth=1.8; ctx.setLineDash([7,4]);
-  ctx.beginPath(); ctx.moveTo(px(bx),py(by)); ctx.lineTo(px(bx+fanR*Math.cos(mn)),py(by+fanR*Math.sin(mn))); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(px(bx),py(by)); ctx.lineTo(px(bx+fanR*Math.cos(mx)),py(by+fanR*Math.sin(mx))); ctx.stroke();
-  ctx.globalAlpha=0.45;
-  ctx.beginPath(); ctx.arc(px(bx),py(by),px(fanR*0.32),mn,mx,false); ctx.stroke();
-  ctx.setLineDash([]);
-  const deg=Math.round(Math.abs(mx-mn)*180/Math.PI);
-  const mid=(mn+mx)/2, lr=fanR*0.38;
-  const lx=bx+lr*Math.cos(mid), ly=by+lr*Math.sin(mid);
-  ctx.globalAlpha=1;
-  const tw=py(32),th=py(18);
-  ctx.fillStyle="rgba(0,0,0,0.55)";
-  ctx.beginPath(); ctx.roundRect(px(lx)-tw/2,py(ly)-th/2,tw,th,4); ctx.fill();
-  ctx.fillStyle=c.main; ctx.font=`bold ${py(12)}px 'Apple SD Gothic Neo',sans-serif`;
-  ctx.textAlign="center"; ctx.textBaseline="middle";
-  ctx.fillText(deg+"°",px(lx),py(ly));
-  corners.forEach(c=>{
-    ctx.globalAlpha=0.75; ctx.fillStyle=PINFO[key].main;
-    ctx.beginPath(); ctx.arc(px(c.x),py(c.y),px(5.5),0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle="rgba(255,255,255,0.6)"; ctx.lineWidth=1.2; ctx.globalAlpha=0.9; ctx.stroke();
-  });
-  ctx.restore();
-}
-
-// ── 화살표 ──
-function drawArrow(x1,y1,x2,y2,color,dashed){
-  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
-  if(len<12)return;
-  const ang=Math.atan2(dy,dx), ex=x2-13*Math.cos(ang), ey=y2-13*Math.sin(ang);
-  ctx.save(); ctx.strokeStyle=color; ctx.fillStyle=color;
-  ctx.lineWidth=2.5; ctx.globalAlpha=0.9; ctx.lineCap="round";
-  if(dashed)ctx.setLineDash([7,4]);
-  ctx.beginPath(); ctx.moveTo(px(x1),py(y1)); ctx.lineTo(px(ex),py(ey)); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.beginPath(); ctx.moveTo(px(x2),py(y2));
-  ctx.lineTo(px(ex-7*Math.sin(ang)),py(ey+7*Math.cos(ang)));
-  ctx.lineTo(px(ex+7*Math.sin(ang)),py(ey-7*Math.cos(ang)));
-  ctx.closePath(); ctx.fill(); ctx.restore();
-}
-
-// ── 공 ──
-function drawBall(x,y){
-  ctx.save();
-  ctx.fillStyle="rgba(0,0,0,0.28)";
-  ctx.beginPath(); ctx.arc(px(x+2),py(y+3),px(11),0,Math.PI*2); ctx.fill();
-  ctx.fillStyle="#c8f400";
-  ctx.beginPath(); ctx.arc(px(x),py(y),px(11),0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle="#8faa00"; ctx.lineWidth=1.8;
-  ctx.beginPath(); ctx.arc(px(x),py(y),px(11),0,Math.PI*2); ctx.stroke();
-  ctx.strokeStyle="rgba(255,255,255,0.5)"; ctx.lineWidth=1.5;
-  ctx.beginPath(); ctx.moveTo(px(x-6),py(y)); ctx.quadraticCurveTo(px(x),py(y-5),px(x+6),py(y)); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(px(x-6),py(y)); ctx.quadraticCurveTo(px(x),py(y+5),px(x+6),py(y)); ctx.stroke();
-  ctx.restore();
-}
-
-// ── 자유 그리기 ──
-function drawFreeLines(){
-  [...drawPaths,(currentPath||null)].filter(Boolean).forEach(path=>{
-    if(path.points.length<2)return;
-    ctx.save();
-    ctx.strokeStyle=path.color; ctx.lineWidth=path.width*(canvas.width/LW);
-    ctx.lineCap="round"; ctx.lineJoin="round"; ctx.globalAlpha=0.85;
-    ctx.beginPath(); ctx.moveTo(px(path.points[0].x),py(path.points[0].y));
-    for(let i=1;i<path.points.length;i++) ctx.lineTo(px(path.points[i].x),py(path.points[i].y));
-    ctx.stroke(); ctx.restore();
-  });
-}
-
-// ── 메인 드로우 ──
-function draw(){
-  const W=canvas.width, H=canvas.height, T=THEMES[currentTheme];
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle=T.bg; ctx.beginPath(); ctx.roundRect(0,0,W,H,12); ctx.fill();
-  const cg=ctx.createLinearGradient(0,0,0,H);
-  cg.addColorStop(0,T.courtGrad[0]); cg.addColorStop(0.49,T.courtGrad[1]);
-  cg.addColorStop(0.51,T.courtGrad[2]); cg.addColorStop(1,T.courtGrad[3]);
-  ctx.fillStyle=cg; ctx.fillRect(px(CL),py(CT),px(CR-CL),py(CB-CT));
-  ctx.fillStyle=T.ally;
-  ctx.fillRect(px(CL),py(CT),px(ALLY_W),py(CB-CT));
-  ctx.fillRect(px(ALLY_R),py(CT),px(ALLY_W),py(CB-CT));
-  if(showCover) KEYS.forEach(k=>drawCoverZone(k,players[k]));
-  if(showAngle&&selectedKeys.size>0) selectedKeys.forEach(k=>drawShotAngles(k,players[k]));
-  ctx.strokeStyle="rgba(255,255,255,0.85)"; ctx.lineWidth=2.5;
-  ctx.strokeRect(px(CL),py(CT),px(CR-CL),py(CB-CT));
-  ctx.strokeStyle="rgba(255,255,255,0.7)"; ctx.lineWidth=1.8;
-  line(ALLY_L,CT,ALLY_L,CB); line(ALLY_R,CT,ALLY_R,CB);
-  ctx.strokeStyle="rgba(255,255,255,0.65)";
-  line(ALLY_L,SVC_T,ALLY_R,SVC_T); line(ALLY_L,SVC_B,ALLY_R,SVC_B);
-  ctx.strokeStyle="rgba(255,255,255,0.5)"; ctx.lineWidth=1.5;
-  line(CX_L,SVC_T,CX_L,SVC_B); line(CX_L,CT,CX_L,CT+14); line(CX_L,CB-14,CX_L,CB);
-  ctx.fillStyle=T.net; ctx.fillRect(0,py(NET_Y-5),W,py(10));
-  ctx.shadowBlur=10; ctx.shadowColor="rgba(255,255,255,0.7)";
-  ctx.strokeStyle="white"; ctx.lineWidth=3; line(0,NET_Y,LW,NET_Y); ctx.shadowBlur=0;
-  ctx.fillStyle="#c8a05a";
-  ctx.fillRect(px(CL-8),py(NET_Y-14),px(10),py(28));
-  ctx.fillRect(px(CR-2),py(NET_Y-14),px(10),py(28));
-  ctx.fillStyle="rgba(255,255,255,0.3)";
-  ctx.font=`${py(8)}px sans-serif`; ctx.textAlign="center"; ctx.textBaseline="alphabetic";
-  ctx.fillText("NET",px(CX_L),py(NET_Y-8));
-  ctx.font=`bold ${py(9)}px 'Apple SD Gothic Neo',sans-serif`;
-  ctx.fillStyle=T.l1; ctx.textBaseline="alphabetic";
-  ctx.fillText("우리팀 코트",px(CX_L),py(CB-10));
-  ctx.fillStyle=T.l2; ctx.fillText("상대팀 코트",px(CX_L),py(CT+20));
-  drawFreeLines();
-  arrows.forEach(a=>drawArrow(a.x1,a.y1,a.x2,a.y2,a.color,!a.fromKey));
-  if(arrowDraw) drawArrow(arrowDraw.x1,arrowDraw.y1,mousePos.x,mousePos.y,arrowDraw.color,!arrowDraw.fromKey);
-  if(showBall) drawBall(ball.x,ball.y);
-  KEYS.forEach(k=>drawPerson(k,players[k]));
-}
-
-// ── 이벤트 ──
-function getLogicalPos(e){
-  const rect=canvas.getBoundingClientRect();
-  const t=e.touches?(e.touches[0]||e.changedTouches[0]):e;
-  return{x:Math.max(0,Math.min(LW,(t.clientX-rect.left)/rect.width*LW)),y:Math.max(0,Math.min(LH,(t.clientY-rect.top)/rect.height*LH))};
-}
-function hitPlayer(pos){
-  for(let i=KEYS.length-1;i>=0;i--){const k=KEYS[i],p=players[k];const dx=pos.x-p.x,dy=pos.y-p.y;if(Math.abs(dx)<35&&dy>-65&&dy<18)return k;}
-  return null;
-}
-function hitBall(pos){const dx=pos.x-ball.x,dy=pos.y-ball.y;return Math.sqrt(dx*dx+dy*dy)<18;}
-
-canvas.addEventListener("mousedown", onDown);
-canvas.addEventListener("touchstart",onDown,{passive:false});
-canvas.addEventListener("mousemove", onMove);
-canvas.addEventListener("touchmove", onMove,{passive:false});
-canvas.addEventListener("mouseup",   onUp);
-canvas.addEventListener("touchend",  onUp);
-
-function onDown(e){
-  e.preventDefault();
-  const pos=getLogicalPos(e);
-  dragMoved=false; tapStartPos={x:pos.x,y:pos.y};
-  if(mode==="draw"){currentPath={color:drawColor,width:3,points:[pos]};isDrawing=true;return;}
-  const pk=hitPlayer(pos);
-  if(mode==="arrow"){
-    if(pk) arrowDraw={x1:players[pk].x,y1:players[pk].y,color:PINFO[pk].main,fromKey:pk};
-    else   arrowDraw={x1:pos.x,y1:pos.y,color:"rgba(255,255,255,0.75)",fromKey:null};
-    mousePos=pos; return;
-  }
-  if(pk) dragging=pk;
-  else if(showBall&&hitBall(pos)) dragging="ball";
-}
-function onMove(e){
-  e.preventDefault();
-  const pos=getLogicalPos(e); mousePos=pos;
-  if(mode==="draw"&&isDrawing&&currentPath){currentPath.points.push(pos);draw();return;}
-  if(dragging&&tapStartPos){const dx=pos.x-tapStartPos.x,dy=pos.y-tapStartPos.y;if(Math.sqrt(dx*dx+dy*dy)>15)dragMoved=true;}
-  if(dragMoved){
-    if(dragging==="ball"){ball.x=pos.x;ball.y=pos.y;}
-    else if(dragging){players[dragging].x=pos.x;players[dragging].y=pos.y;}
-    draw();
+function checkTBWin(p) {
+  const o=1-p, pp=S.tbPts[p], op=S.tbPts[o];
+  if (pp>=7 && pp-op>=2) {
+    S.tb=false;
+    S.games[p]++;
+    endMatch(p);
   }
 }
-function onUp(e){
-  if(mode==="draw"&&isDrawing&&currentPath){
-    if(currentPath.points.length>1) drawPaths.push({...currentPath});
-    currentPath=null; isDrawing=false; draw(); return;
+
+function addFault(p) {
+  saveHist(); S.faults++;
+  updateFaultDots();
+  if (S.faults>=2) {
+    S.dfs++;
+    document.getElementById('df-cnt').textContent=S.dfs;
+    flashStatus('⚡ 더블 폴트!', 1800);
+    S.faults=0; updateFaultDots();
+    addPoint(1-S.serving);
+  } else {
+    flashStatus('폴트 — 2차 서브', 1400);
   }
-  if(mode==="arrow"&&arrowDraw){
-    const pos=getLogicalPos(e);
-    const dx=pos.x-arrowDraw.x1,dy=pos.y-arrowDraw.y1;
-    if(Math.sqrt(dx*dx+dy*dy)>20) arrows.push({...arrowDraw,x2:pos.x,y2:pos.y});
-    arrowDraw=null;
-  } else if(!dragMoved&&dragging&&dragging!=="ball"){
-    const now=Date.now();
-    if(lastTap.key===dragging&&now-lastTap.time<400){
-      openPlayerEdit(dragging); lastTap={key:null,time:0};
-    } else {
-      lastTap={key:dragging,time:now};
-      if(selectedKeys.has(dragging)) selectedKeys.delete(dragging);
-      else selectedKeys.add(dragging);
-    }
-  } else if(!dragMoved&&!dragging){
-    const pos=getLogicalPos(e);
-    if(!hitPlayer(pos)&&!(showBall&&hitBall(pos))) selectedKeys.clear();
+}
+
+function addAce(p) { flashStatus('🎯 에이스!', 1200); addPoint(p); }
+
+function setTiebreak() {
+  if (S.tb || S.over) return;
+  S.tb=true; S.tbPts=[0,0];
+  S.games=[5,5];
+  render(); flashStatus('🔀 타이브레이크!', 1500);
+}
+
+function endMatch(p) {
+  S.over=true;
+  const n1=document.getElementById('in-name1').value||'선수 1';
+  const n2=document.getElementById('in-name2').value||'선수 2';
+  const names=[n1,n2];
+  document.getElementById('w-name').textContent=names[p];
+  document.getElementById('w-score').textContent=`${S.games[p]} - ${S.games[1-p]}`;
+  document.getElementById('winner-screen').classList.add('show');
+}
+
+/* ─── Undo / Reset ─── */
+function saveHist() {
+  S.history.push(JSON.stringify({
+    serving:S.serving, pts:[...S.pts],
+    games:[...S.games], deuce:S.deuce,
+    tb:S.tb, tbPts:[...S.tbPts],
+    faults:S.faults, dfs:S.dfs, over:S.over
+  }));
+}
+function undoPoint() {
+  if (!S.history.length) { flashStatus('되돌릴 기록 없음', 1000); return; }
+  const prev=JSON.parse(S.history.pop());
+  const hist=S.history;
+  Object.assign(S, prev);
+  S.games=[...prev.games];
+  S.history=hist;
+  render(); updateFaultDots();
+  document.getElementById('df-cnt').textContent=S.dfs;
+  flashStatus('↩ 되돌렸습니다', 1000);
+}
+function resetFaults() { S.faults=0; updateFaultDots(); }
+function resetMatch() {
+  S=freshState();
+  document.getElementById('winner-screen').classList.remove('show');
+  document.getElementById('df-cnt').textContent=0;
+  updateFaultDots();
+  render();
+}
+
+/* ─── 설정 적용 ─── */
+function applySetup() {
+  const n1=document.getElementById('in-name1').value||'선수 1';
+  const n2=document.getElementById('in-name2').value||'선수 2';
+  const title=document.getElementById('in-title').value||'동호인 테니스';
+  document.getElementById('name1-d').textContent=n1;
+  document.getElementById('name2-d').textContent=n2;
+  document.getElementById('c-name1').textContent=n1;
+  document.getElementById('c-name2').textContent=n2;
+  document.getElementById('match-title').textContent='🎾 '+title;
+}
+
+/* ─── 렌더링 ─── */
+function render() {
+  // 서브 표시
+  document.getElementById('sdot1').className='serve-dot'+(S.serving===0?' on':'');
+  document.getElementById('sdot2').className='serve-dot'+(S.serving===1?' on':'');
+  document.getElementById('pb1').className='player-block'+(S.serving===0?' serving':'');
+  document.getElementById('pb2').className='player-block'+(S.serving===1?' serving':'');
+
+  // 포인트 텍스트
+  let t0,t1,cls0='p-pts',cls1='p-pts';
+  if (S.tb) {
+    t0=S.tbPts[0]; t1=S.tbPts[1];
+  } else if (S.deuce) {
+    t0=S.pts[0]===4?'AD':'DU';
+    t1=S.pts[1]===4?'AD':'DU';
+    if (t0==='DU'&&t1==='DU') { t0='DU'; t1='CE'; }
+    cls0+=' deuce-ad'; cls1+=' deuce-ad';
+  } else {
+    t0=PTXT[S.pts[0]]??'0';
+    t1=PTXT[S.pts[1]]??'0';
   }
-  dragging=null; dragMoved=false; tapStartPos=null; draw();
+
+  const p1e=document.getElementById('pts1-d');
+  const p2e=document.getElementById('pts2-d');
+  p1e.textContent=t0; p1e.className=cls0;
+  p2e.textContent=t1; p2e.className=cls1;
+
+  // 게임 스코어
+  document.getElementById('gsc1').textContent=S.games[0];
+  document.getElementById('gsc2').textContent=S.games[1];
+  document.getElementById('top-g1').textContent=S.games[0];
+  document.getElementById('top-g2').textContent=S.games[1];
 }
 
-// ── 프리셋 ──
-function applyPreset(key){
-  activePreset=key; selectedKeys.clear();
-  const p=PRESETS[key];
-  KEYS.forEach(k=>{players[k]={...p[k]};});
-  arrows=[]; arrowDraw=null; drawPaths=[];
-  document.getElementById("descBox").textContent=p.desc;
-  document.querySelectorAll(".preset-btn").forEach(b=>b.classList.toggle("active",b.dataset.preset===key));
-  draw();
-}
-document.querySelectorAll(".preset-btn").forEach(b=>b.addEventListener("click",()=>applyPreset(b.dataset.preset)));
-
-// ── 버튼 ──
-const btnArrow=document.getElementById("btnArrow");
-btnArrow.addEventListener("click",()=>{
-  mode=mode==="arrow"?"drag":"arrow";
-  if(mode==="arrow") document.getElementById("btnDraw").classList.remove("draw-on");
-  arrowDraw=null;
-  btnArrow.textContent=mode==="arrow"?"✏️ 화살표 ON":"➡️ 화살표";
-  btnArrow.classList.toggle("arrow-on",mode==="arrow");
-  canvas.classList.toggle("draw-cursor",mode==="arrow");
-  updateGuide();
-});
-
-const btnDraw=document.getElementById("btnDraw");
-btnDraw.addEventListener("click",()=>{
-  mode=mode==="draw"?"drag":"draw";
-  if(mode==="draw"){btnArrow.classList.remove("arrow-on");btnArrow.textContent="➡️ 화살표";}
-  btnDraw.textContent=mode==="draw"?"✏️ 그리기 ON":"✏️ 그리기";
-  btnDraw.classList.toggle("draw-on",mode==="draw");
-  canvas.classList.toggle("draw-cursor",mode==="draw");
-  updateGuide();
-});
-
-const btnCover=document.getElementById("btnCover");
-btnCover.addEventListener("click",()=>{
-  showCover=!showCover;
-  btnCover.textContent=showCover?"⭕ 커버존 ON":"⭕ 커버존 OFF";
-  btnCover.classList.toggle("cover-on",showCover); draw();
-});
-const btnBall=document.getElementById("btnBall");
-btnBall.addEventListener("click",()=>{
-  showBall=!showBall;
-  btnBall.textContent=showBall?"🎾 공 ON":"🎾 공 OFF";
-  btnBall.classList.toggle("ball-on",showBall); draw();
-});
-const btnAngle=document.getElementById("btnAngle");
-btnAngle.addEventListener("click",()=>{
-  showAngle=!showAngle;
-  btnAngle.textContent=showAngle?"📐 타구각 ON":"📐 타구각 OFF";
-  btnAngle.classList.toggle("angle-on",showAngle); draw();
-});
-document.getElementById("btnDel").addEventListener("click",()=>{
-  arrows=[]; arrowDraw=null; drawPaths=[]; draw(); showToast("화살표·그리기 삭제됨");
-});
-document.getElementById("btnReset").addEventListener("click",()=>{
-  selectedKeys.clear(); applyPreset(activePreset);
-  ball={x:CX_L,y:NET_Y+60}; arrows=[]; drawPaths=[]; draw(); showToast("초기화 완료");
-});
-
-function updateGuide(){
-  const g=document.getElementById("guide");
-  if(mode==="arrow") g.innerHTML="선수 탭→드래그: 이동 화살표 &nbsp;·&nbsp; 빈 곳 탭→드래그: 자유 화살표";
-  else if(mode==="draw") g.innerHTML="손가락으로 자유롭게 그리세요 &nbsp;·&nbsp; 삭제 버튼으로 지우기";
-  else g.innerHTML="선수 탭 → 선택(타구각) &nbsp;·&nbsp; 더블탭 → 편집 &nbsp;·&nbsp; 드래그 → 이동";
+function updateFaultDots() {
+  document.getElementById('fd1').className='fd-dot'+(S.faults>=1?' on':'');
+  document.getElementById('fd2').className='fd-dot'+(S.faults>=2?' on':'');
 }
 
-// ── 선수 편집 ──
-let editingKey=null;
-function openPlayerEdit(key){
-  editingKey=key; const p=PINFO[key];
-  document.getElementById("editName").value=p.name||"";
-  document.getElementById("editNumber").value=p.number||"";
-  document.getElementById("editPosition").value=p.position||"";
-  document.getElementById("editSize").value=String(p.size||1);
-  const sw=document.getElementById("colorSwatches"); sw.innerHTML="";
-  COLOR_PALETTE.forEach(col=>{
-    const d=document.createElement("div");
-    d.className="color-swatch"+(col===p.main?" selected":"");
-    d.style.background=col;
-    d.onclick=()=>{sw.querySelectorAll(".color-swatch").forEach(x=>x.classList.remove("selected"));d.classList.add("selected");};
-    sw.appendChild(d);
-  });
-  document.getElementById("modalPlayer").classList.remove("hidden");
-}
-document.getElementById("editCancel").onclick=()=>document.getElementById("modalPlayer").classList.add("hidden");
-document.getElementById("editOk").onclick=()=>{
-  const key=editingKey, p=PINFO[key];
-  p.name=document.getElementById("editName").value.trim();
-  p.number=document.getElementById("editNumber").value.trim();
-  p.position=document.getElementById("editPosition").value.trim();
-  p.size=parseFloat(document.getElementById("editSize").value)||1;
-  const sel=document.querySelector("#colorSwatches .color-swatch.selected");
-  if(sel){p.main=sel.style.background;updateDark(key);}
-  p.label=p.number||key.replace("M","우").replace("O","상");
-  document.getElementById("modalPlayer").classList.add("hidden");
-  draw(); showToast("선수 정보 저장됨 ✓");
-};
-
-// ── 보드 설정 ──
-document.getElementById("btnBoardStyle").onclick=()=>{
-  document.querySelectorAll(".theme-chip").forEach(b=>b.classList.toggle("selected",b.dataset.theme===currentTheme));
-  document.getElementById("boardSize").value=String(globalSize);
-  // 그리기 색상 팔레트
-  const ds=document.getElementById("drawColorSwatches"); ds.innerHTML="";
-  DRAW_COLORS.forEach(col=>{
-    const d=document.createElement("div");
-    d.className="color-swatch"+(col===drawColor?" selected":"");
-    d.style.background=col;
-    if(col==="#ffffff")d.style.border="2px solid rgba(255,255,255,0.4)";
-    d.onclick=()=>{ds.querySelectorAll(".color-swatch").forEach(x=>x.classList.remove("selected"));d.classList.add("selected");};
-    ds.appendChild(d);
-  });
-  document.getElementById("modalBoard").classList.remove("hidden");
-};
-document.getElementById("themeRow").addEventListener("click",e=>{
-  const btn=e.target.closest(".theme-chip"); if(!btn)return;
-  document.querySelectorAll(".theme-chip").forEach(b=>b.classList.remove("selected")); btn.classList.add("selected");
-});
-document.getElementById("boardClose").onclick=()=>document.getElementById("modalBoard").classList.add("hidden");
-document.getElementById("boardOk").onclick=()=>{
-  const sel=document.querySelector(".theme-chip.selected"); if(sel) currentTheme=sel.dataset.theme;
-  globalSize=parseFloat(document.getElementById("boardSize").value)||1;
-  const dc=document.querySelector("#drawColorSwatches .color-swatch.selected"); if(dc) drawColor=dc.style.background;
-  document.getElementById("modalBoard").classList.add("hidden"); draw(); showToast("보드 설정 적용됨 ✓");
-};
-
-// ── 저장/불러오기 ──
-function getState(){
-  return{players:JSON.parse(JSON.stringify(players)),ball:{...ball},arrows:JSON.parse(JSON.stringify(arrows)),
-    drawPaths:JSON.parse(JSON.stringify(drawPaths)),PINFO:JSON.parse(JSON.stringify(PINFO)),
-    currentTheme,globalSize,activePreset,showCover,showBall,showAngle,drawColor};
-}
-function loadState(s){
-  if(!s)return;
-  if(s.players) players=s.players;
-  if(s.ball) ball=s.ball;
-  if(s.arrows) arrows=s.arrows;
-  if(s.drawPaths) drawPaths=s.drawPaths;
-  if(s.PINFO) PINFO=s.PINFO;
-  if(s.currentTheme) currentTheme=s.currentTheme;
-  if(s.globalSize) globalSize=s.globalSize;
-  if(s.activePreset) activePreset=s.activePreset;
-  if(s.showCover!==undefined) showCover=s.showCover;
-  if(s.showBall!==undefined) showBall=s.showBall;
-  if(s.showAngle!==undefined) showAngle=s.showAngle;
-  if(s.drawColor) drawColor=s.drawColor;
-  draw();
+let statusTimer=null;
+function flashStatus(msg, dur=1500) {
+  const el=document.getElementById('status-msg');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(statusTimer);
+  statusTimer=setTimeout(()=>el.classList.remove('show'), dur);
 }
 
-document.getElementById("btnSave").onclick=()=>{
-  document.getElementById("saveNameInput").value="";
-  document.getElementById("modalSaveName").classList.remove("hidden");
-  setTimeout(()=>document.getElementById("saveNameInput").focus(),100);
-};
-document.getElementById("saveNameCancel").onclick=()=>document.getElementById("modalSaveName").classList.add("hidden");
-document.getElementById("saveNameOk").onclick=()=>{
-  const name=document.getElementById("saveNameInput").value.trim()||"전술판";
-  const saves=JSON.parse(localStorage.getItem("niji_tactics_saves")||"[]");
-  saves.unshift({name,date:new Date().toLocaleString("ko-KR"),state:getState()});
-  if(saves.length>20) saves.pop();
-  localStorage.setItem("niji_tactics_saves",JSON.stringify(saves));
-  document.getElementById("modalSaveName").classList.add("hidden");
-  showToast(`"${name}" 저장 완료! 💾`);
-};
-
-document.getElementById("btnLoad").onclick=()=>{
-  const saves=JSON.parse(localStorage.getItem("niji_tactics_saves")||"[]");
-  const list=document.getElementById("slotList"); list.innerHTML="";
-  if(saves.length===0){list.innerHTML='<div class="save-empty">저장된 전술판이 없어요</div>';}
-  else{
-    saves.forEach((s,i)=>{
-      const row=document.createElement("div"); row.className="save-slot";
-      row.innerHTML=`<div class="save-slot-info"><div class="save-slot-name">${s.name}</div><div class="save-slot-date">${s.date}</div></div><button class="save-slot-del" data-i="${i}">삭제</button>`;
-      row.addEventListener("click",e=>{
-        if(e.target.classList.contains("save-slot-del")){
-          saves.splice(parseInt(e.target.dataset.i),1);
-          localStorage.setItem("niji_tactics_saves",JSON.stringify(saves));
-          document.getElementById("btnLoad").onclick(); return;
-        }
-        loadState(s.state);
-        document.getElementById("modalLoad").classList.add("hidden");
-        showToast(`"${s.name}" 불러오기 완료! 📂`);
-      });
-      list.appendChild(row);
-    });
-  }
-  document.getElementById("modalLoad").classList.remove("hidden");
-};
-document.getElementById("loadClose").onclick=()=>document.getElementById("modalLoad").classList.add("hidden");
-
-// ── 공유 ──
-document.getElementById("btnShare").onclick=()=>{
-  const json=JSON.stringify(getState());
-  const b64=btoa(unescape(encodeURIComponent(json)));
-  const url=location.href.split("?")[0]+"?s="+b64;
-  document.getElementById("shareLinkBox").textContent=url;
-  document.getElementById("modalShare").classList.remove("hidden");
-};
-document.getElementById("shareClose").onclick=()=>document.getElementById("modalShare").classList.add("hidden");
-document.getElementById("shareCopy").onclick=()=>{
-  const link=document.getElementById("shareLinkBox").textContent;
-  navigator.clipboard.writeText(link).then(()=>showToast("링크 복사됨! 카카오톡에 붙여넣기 🔗"))
-    .catch(()=>{const ta=document.createElement("textarea");ta.value=link;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);showToast("링크 복사됨! 📋");});
-  document.getElementById("modalShare").classList.add("hidden");
-};
-
-function loadFromURL(){
-  const p=new URLSearchParams(location.search), s=p.get("s"); if(!s)return;
-  try{loadState(JSON.parse(decodeURIComponent(escape(atob(s)))));showToast("공유된 전술판을 불러왔어요! 🔗");}catch(e){}
-}
-
-// ── 토스트 ──
-let toastTimer=null;
-function showToast(msg){
-  const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2200);
-}
-
-// ── 초기 실행 ──
-applyPreset("basic");
-window.addEventListener("resize",layoutCanvas);
-layoutCanvas();
-loadFromURL();
+// 초기 렌더
+render();
 </script>
 </body>
 </html>
