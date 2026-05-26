@@ -696,6 +696,11 @@ function flashStatus(msg, dur=1500) {
 // 초기 렌더
 render();
 
+// 서비스워커 등록 (크롬 PWA 전체화면)
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/tennis-scoreboard/sw.js");
+}
+
 // 주소창 자동 숨기기
 setTimeout(function() { window.scrollTo(0, 1); }, 300);
 window.addEventListener('orientationchange', function() {
